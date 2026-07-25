@@ -31,6 +31,18 @@
 ## 배포 URL (카카오 도메인 등록용)
 
 - 저장소: https://github.com/JustinCho-Crypto/beach-toilet (public, `gh-pages` 브랜치 서빙)
-- 공개 URL: **https://justincho-crypto.github.io/beach-toilet/**
-- 이 URL은 **카카오 개발자 콘솔 Web 플랫폼 등록 + 실 지도 동작 확인 목적**이다. 앱인토스 실제 출시는 별개(`BASE=/` 빌드 → `.ait` 번들 → 콘솔 업로드).
-- 카카오 JS 키는 도메인 화이트리스트로 보호되는 **공개 키**라 번들에 포함돼도 정상. 단 콘솔에 등록한 도메인 외에서는 동작하지 않아야 하므로, 등록 도메인을 필요한 것만 유지할 것.
+- 공개 URL: **https://justincho-crypto.github.io/beach-toilet/** — 2026-07-26 실 카카오맵 렌더링 확인 완료
+- 이 URL은 **카카오 도메인 등록 + 실 지도 동작 확인 목적**이다. 앱인토스 실제 출시는 별개(`BASE=/` 빌드 → `.ait` 번들 → 콘솔 업로드).
+- 카카오 JS 키는 도메인 화이트리스트로 보호되는 **공개 키**라 번들에 포함돼도 정상. 단 등록 도메인은 필요한 것만 유지할 것.
+
+### 카카오맵 설정 — 실제로 막혔던 지점 (재현 방지용 기록)
+
+1. **제품 활성화가 먼저다.** 키가 맞아도 `제품 설정 → 카카오맵 → 활성화 설정 ON`이 안 돼 있으면 SDK가 403 `NotAuthorizedError: disabled OPEN_MAP_AND_LOCAL service`를 반환한다. 진단은 `curl "https://dapi.kakao.com/v2/maps/sdk.js?appkey=<키>&autoload=false"` — 200이면 정상, 403이면 이 문제.
+2. **JS 키와 도메인 등록 위치가 개편됐다.** 예전 `앱 키` / `플랫폼 > Web 사이트 도메인`이 아니라, 지금은 `앱 설정 → 앱 → 플랫폼 키 → JavaScript 키`에서 키를 확인하고 같은 화면의 **JavaScript SDK 도메인**에 도메인을 등록한다.
+3. 현재 등록된 도메인은 `https://justincho-crypto.github.io` **하나뿐**이라, **localhost에서는 실 지도가 안 뜨고 목업 지도로 폴백된다** (의도된 동작). 로컬에서 실 지도를 봐야 하면 `http://localhost:5199`를 추가 등록할 것.
+
+### GitHub Pages 배포 주의
+
+- `scripts/deploy-pages.sh`는 **worktree로 gh-pages 히스토리를 이어서** 커밋한다. 예전처럼 `git init` + force push를 하면 **GitHub이 Pages 사이트를 unpublish 해버린다** (실제 발생).
+- 무료 플랜은 **private 저장소에 Pages를 지원하지 않는다.** 저장소가 private으로 되돌아가면 Pages가 즉시 죽는다.
+- `docs/기획안.md`는 사업 전략 문서라 **공개 저장소에서 제외**(gitignore)되어 있다. 로컬에만 존재.
