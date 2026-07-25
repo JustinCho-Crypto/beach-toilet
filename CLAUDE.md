@@ -9,7 +9,7 @@
 - **웹뷰 방식** (Granite RN 아님) — 지도 JS SDK가 웹에서만 동작하기 때문. ait-factory 규칙(플레이스홀더 ID 체계, M3 교체)은 승계.
 - Vite + TypeScript, 프레임워크 없음. 탭 2개(지도/포인트, 하단 플로팅 알약) + 스팟 바텀시트 + 제보 시트가 화면 전부.
 - `src/config.ts`에 운영 전환 시 교체할 값 집중: 카카오 JS 키, 광고 지면 ID(`ait.v2.live.__REPLACE_AT_M3__`), 보상 확률표, 일일 한도(10), GPS 반경(200m), `DEV_BYPASS_GPS`.
-- **카카오맵 SDK 로드 실패 시 목업 지도 폴백** 자동 동작 — 개발은 키 없이 가능. M3 전 카카오 콘솔에 `*.apps.tossmini.com` / `*.private-apps.tossmini.com` 도메인 등록 필수(무한 로딩의 추정 원인, techchat 3859). 실패 시 네이버지도 폴백 검토.
+- **카카오맵 SDK 로드 실패 시 목업 지도 폴백** 자동 동작 — 개발은 키 없이 가능. 로컬 개발 중 실제 지도로 확인하려면 `.env.local`(gitignore 대상)에 `VITE_KAKAO_JS_KEY=발급받은키` 추가. M3(운영 전환) 시점엔 `config.ts`의 플레이스홀더 상수를 실키로 교체. 카카오 콘솔 Web 플랫폼에 `http://localhost:5199` / `*.apps.tossmini.com` / `*.private-apps.tossmini.com` 도메인 등록 필수(도메인 미등록이 무한 로딩의 추정 원인, techchat 3859 — `loadKakaoSdk()`가 script 로드와 `kakao.maps.load()` 콜백 양쪽에 개별 타임아웃+콘솔 진단을 둬서 원인을 구분해준다). 실패 시 네이버지도 폴백 검토.
 - 네이티브 의존(위치/저장소)은 `src/bridge.ts`, 광고는 `src/ads.ts`에 격리. M3에서 `@apps-in-toss/web-framework` 연동 시 이 두 파일만 교체.
 - 시드 데이터는 `src/data.ts` — **출시 전 공공데이터 배치로 교체** (기획안 §5: 해수욕장 264곳 지오코딩, 물놀이관리지역 API, 공중화장실 표준데이터 지오코딩, 샤워실 방문객 상위 30곳 수작업).
 

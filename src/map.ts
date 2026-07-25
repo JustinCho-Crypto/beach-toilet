@@ -164,30 +164,62 @@ export function refreshAfterReport(): void {
 
 // ---------- 카카오맵 ----------
 
+const KMAP_LOG = '[kakao-map]';
+
+/**
+ * 카카오맵 SDK 로더. 두 단계 모두 개별 타임아웃을 둔다:
+ *  1) <script> 자체 로드 (네트워크/404)
+ *  2) kakao.maps.load() 콜백 (도메인 미등록 시 콜백이 영영 안 오는 게 알려진 실패 모드 — techchat 3859)
+ * 어느 쪽이 실패해도 false를 반환해 목업 지도로 폴백하고, 원인을 콘솔에 남긴다.
+ */
 function loadKakaoSdk(): Promise<boolean> {
   return new Promise((resolve) => {
     if (window.kakao?.maps?.Map) {
       resolve(true);
       return;
     }
-    if (KAKAO_JS_KEY.startsWith('__REPLACE')) {
+    if (!KAKAO_JS_KEY || KAKAO_JS_KEY.startsWith('__REPLACE')) {
+      console.warn(`${KMAP_LOG} JS 키 미설정 — 목업 지도로 폴백합니다. .env.local의 VITE_KAKAO_JS_KEY를 확인하세요.`);
       resolve(false);
       return;
     }
+
+    let settled = false;
+    const finish = (ok: boolean, reason?: string) => {
+      if (settled) return;
+      settled = true;
+      if (!ok) console.error(`${KMAP_LOG} 로드 실패 — 목업 지도로 폴백합니다. 원인: ${reason}`);
+      resolve(ok);
+    };
+
+    const scriptTimeout = window.setTimeout(() => finish(false, 'script 태그 로드 타임아웃(8s) — 네트워크 또는 키 형식 확인'), 8000);
+
     const s = document.createElement('script');
     s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_JS_KEY}&autoload=false`;
-    const timeout = window.setTimeout(() => resolve(false), 8000);
     s.onload = () => {
-      window.clearTimeout(timeout);
+      window.clearTimeout(scriptTimeout);
       if (!window.kakao?.maps) {
-        resolve(false);
+        finish(false, 'script는 로드됐으나 window.kakao.maps 없음');
         return;
       }
-      window.kakao.maps.load(() => resolve(true));
+      // 도메인 미등록 시 이 콜백이 오지 않을 수 있어(webview 무한 로딩의 실제 원인) 별도 타임아웃을 건다.
+      const loadTimeout = window.setTimeout(
+        () => finish(false, 'kakao.maps.load() 콜백 타임아웃(6s) — Web 플랫폼에 현재 도메인이 등록됐는지 확인 (개발자센터 > 플랫폼)'),
+        6000,
+      );
+      try {
+        window.kakao.maps.load(() => {
+          window.clearTimeout(loadTimeout);
+          finish(true);
+        });
+      } catch (e) {
+        window.clearTimeout(loadTimeout);
+        finish(false, `kakao.maps.load() 호출 중 예외: ${e}`);
+      }
     };
     s.onerror = () => {
-      window.clearTimeout(timeout);
-      resolve(false);
+      window.clearTimeout(scriptTimeout);
+      finish(false, 'script 태그 로드 에러(네트워크/404) — appkey 값 확인');
     };
     document.head.appendChild(s);
   });
@@ -377,9 +409,16 @@ export async function initMapView(myPos: LatLng): Promise<void> {
 
   const container = document.getElementById('map-container')!;
   const sdkOk = await loadKakaoSdk();
+  let usedKakao = false;
   if (sdkOk) {
-    initKakaoMap(container);
-  } else {
+    try {
+      initKakaoMap(container);
+      usedKakao = true;
+    } catch (e) {
+      console.error(`${KMAP_LOG} 지도 초기화 중 예외 — 목업 지도로 폴백합니다:`, e);
+    }
+  }
+  if (!usedKakao) {
     initMockMap(container);
   }
 

@@ -1,9 +1,14 @@
 // 운영 전환 시 교체가 필요한 값은 전부 이 파일에 모은다 (ait-factory M3 규칙).
 
 // 카카오맵 JavaScript 키. 발급 전까지는 플레이스홀더 → SDK 로드 실패 시 목업 지도로 폴백된다.
-// M3 전 필수: 카카오 개발자 콘솔에 <appName>.apps.tossmini.com / <appName>.private-apps.tossmini.com 도메인 등록
-// (미등록이 토스 웹뷰 무한 로딩의 추정 원인 — techchat 스레드 3859). 실패 시 네이버지도 폴백 검토.
-export const KAKAO_JS_KEY = '__REPLACE_KAKAO_JS_KEY__';
+// 로컬 개발 중엔 .env.local(gitignore 대상)에 VITE_KAKAO_JS_KEY=발급받은키 를 넣으면 즉시 적용된다.
+// M3(운영 전환) 시점엔 아래 플레이스홀더 상수 자체를 실키로 교체 (ait-factory 컨벤션 — config.ts에만 값 집중).
+// 필수: 카카오 개발자 콘솔 → 내 애플리케이션 → 플랫폼 → Web 플랫폼에 아래 도메인 등록
+//   - http://localhost:5199 (로컬 개발)
+//   - https://beach-toilet.apps.tossmini.com (실 서비스)
+//   - https://beach-toilet.private-apps.tossmini.com (테스트)
+// (도메인 미등록이 토스 웹뷰 무한 로딩의 추정 원인 — techchat 스레드 3859). 실패 시 네이버지도 폴백 검토.
+export const KAKAO_JS_KEY: string = (import.meta.env.VITE_KAKAO_JS_KEY as string | undefined) || '__REPLACE_KAKAO_JS_KEY__';
 
 // 앱인토스 인앱 광고 2.0 지면 ID. 콘솔 발급 후 M3에서 교체.
 export const AD_GROUP = {
