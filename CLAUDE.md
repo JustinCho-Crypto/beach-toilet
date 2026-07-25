@@ -24,5 +24,13 @@
 
 ## 명령
 
-- `npm run dev` — 개발 서버
+- `npm run dev` — 개발 서버 (5199 포트 고정 — 5173은 다른 프로젝트가 사용 중)
 - `npm run build` — 타입체크 + 빌드
+- `npm run deploy` — GitHub Pages 재배포 → https://justincho-crypto.github.io/beach-toilet/
+
+## 배포 URL (카카오 도메인 등록용)
+
+- 저장소: https://github.com/JustinCho-Crypto/beach-toilet (public, `gh-pages` 브랜치 서빙)
+- 공개 URL: **https://justincho-crypto.github.io/beach-toilet/**
+- 이 URL은 **카카오 개발자 콘솔 Web 플랫폼 등록 + 실 지도 동작 확인 목적**이다. 앱인토스 실제 출시는 별개(`BASE=/` 빌드 → `.ait` 번들 → 콘솔 업로드).
+- 카카오 JS 키는 도메인 화이트리스트로 보호되는 **공개 키**라 번들에 포함돼도 정상. 단 콘솔에 등록한 도메인 외에서는 동작하지 않아야 하므로, 등록 도메인을 필요한 것만 유지할 것.
