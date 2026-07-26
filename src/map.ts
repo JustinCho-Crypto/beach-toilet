@@ -97,6 +97,39 @@ function facilityRowHtml(fac: Facility, myPos: LatLng): string {
   </button>`;
 }
 
+/** 'M.D' → 올해의 Date. 개장 기간 판정용. */
+function mdToDate(md: string, year: number): Date | null {
+  const m = md.match(/^(\d{1,2})\.(\d{1,2})$/);
+  if (!m) return null;
+  return new Date(year, Number(m[1]) - 1, Number(m[2]));
+}
+
+/**
+ * 개장 여부 배지. 근거 데이터가 2024년 일정이라 연도별로 며칠 차이가 나므로
+ * '개장중'은 단정하지 않고 시즌 판정으로만 쓴다. 근거가 없으면 배지를 달지 않는다 —
+ * 전에는 모든 해수욕장에 무조건 '개장중'을 붙여서 사실과 다를 수 있었다.
+ */
+function beachBadge(spot: Spot): string {
+  if (spot.notOpening) return '<span class="badge closed">올해 미개장</span>';
+  if (!spot.openStart || !spot.openEnd) return '';
+  const now = new Date();
+  const y = now.getFullYear();
+  const s = mdToDate(spot.openStart, y);
+  const e = mdToDate(spot.openEnd, y);
+  if (!s || !e) return '';
+  // 폐장일 당일까지 개장으로 본다
+  e.setHours(23, 59, 59);
+  if (now < s) return '<span class="badge caution">개장 예정</span>';
+  if (now > e) return '<span class="badge closed">폐장</span>';
+  return '<span class="badge open">개장 시즌</span>';
+}
+
+function valleyBadge(spot: Spot): string {
+  if (spot.risk === 'danger') return '<span class="badge danger">위험지역</span>';
+  if (spot.risk === 'caution') return '<span class="badge caution">중점관리</span>';
+  return '';
+}
+
 export function openSpotSheet(spotId: string): void {
   if (!state) return;
   const spot = spotById(spotId);
@@ -112,16 +145,10 @@ export function openSpotSheet(spotId: string): void {
     ? (aggs.reduce((s, a) => s + a.avgStars, 0) / aggs.length).toFixed(1)
     : '-';
 
-  const badge = spot.type === 'beach'
-    ? '<span class="badge open">개장중</span>'
-    : spot.risk === 'danger'
-      ? '<span class="badge danger">위험지역</span>'
-      : spot.risk === 'caution'
-        ? '<span class="badge caution">중점관리</span>'
-        : '<span class="badge open">일반지역</span>';
+  const badge = spot.type === 'beach' ? beachBadge(spot) : valleyBadge(spot);
 
   const subParts = [spot.region];
-  if (spot.openStart) subParts.push(`개장 ${spot.openStart} ~ ${spot.openEnd}`);
+  if (spot.openStart) subParts.push(`개장 ${spot.openStart}~${spot.openEnd} <span class="basis">(2024년 기준)</span>`);
   if (spot.note) subParts.push(spot.note);
   if (spot.type === 'valley') subParts.push('생활안전지도 물놀이관리지역');
 

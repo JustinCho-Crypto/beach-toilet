@@ -203,6 +203,8 @@ button { font: inherit; border: 0; background: none; cursor: pointer; color: inh
   border-radius: 6px; font-size: 11px; font-weight: 700;
 }
 .badge.open { background: #E8F7EE; color: #1FA85C; }
+.badge.closed { background: #F2F4F6; color: #8B95A1; }
+.basis { color: #B0B8C1; font-weight: 400; }
 .badge.caution { background: #FFF6DC; color: #D9A400; }
 .badge.danger { background: #FFECEE; color: #F04452; }
 .badge.gps { background: #E8F7EE; color: #1FA85C; }

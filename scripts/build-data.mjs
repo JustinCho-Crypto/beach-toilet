@@ -16,6 +16,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { geocode, keyword, callCount } from './lib/kakao.mjs';
 import { parseCsv, cache, mapLimit, haversineM, progress } from './lib/util.mjs';
+import { readSchedule, readVisitors, normKey } from './lib/beachmeta.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const RAW = path.join(ROOT, 'data-raw');
@@ -362,12 +363,31 @@ function manualShowerNotes() {
 function assign({ beaches, valleys }, candidates, coords, pois) {
   console.log('[5/5] 시설 배정 + 파일 생성');
 
+  // 해양수산부 파일 데이터 (사람이 내려받아 data-raw/에 둔 것). 없으면 조용히 건너뛴다.
+  let schedule = new Map();
+  let visitors = new Map();
+  try { schedule = readSchedule(path.join(RAW, 'beach-schedule-2024.xlsx')); } catch { /* 파일 없음 */ }
+  try { visitors = readVisitors(path.join(RAW, 'beach-visitors.csv')); } catch { /* 파일 없음 */ }
+
   const spots = [];
-  beaches.forEach((b, i) => spots.push({
-    id: slug('b', i), type: 'beach', name: b.name,
-    region: (b.address || b.jibun || '').split(/\s+/).slice(0, 2).join(' '),
-    lat: b.lat, lng: b.lng,
-  }));
+  beaches.forEach((b, i) => {
+    const key = normKey(b.name);
+    const sch = schedule.get(key);
+    const vis = visitors.get(key);
+    const spot = {
+      id: slug('b', i), type: 'beach', name: b.name,
+      region: (b.address || b.jibun || '').split(/\s+/).slice(0, 2).join(' '),
+      lat: b.lat, lng: b.lng,
+    };
+    if (sch && !sch.closed && sch.openStart) {
+      spot.openStart = sch.openStart;
+      spot.openEnd = sch.openEnd;
+    }
+    // 공식 목록에 '미개장'으로 표기된 곳은 그대로 알려준다 (헛걸음 방지)
+    if (sch?.closed) spot.notOpening = true;
+    if (vis && vis.rank <= 50) spot.note = `이용객 전국 ${vis.rank}위`;
+    spots.push(spot);
+  });
   valleys.forEach((v, i) => spots.push({
     id: slug('v', i), type: 'valley', name: v.name,
     region: (v.address || v.jibun || '').split(/\s+/).slice(0, 2).join(' '),
@@ -488,7 +508,14 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
   console.log(`  샤워 안내 문구(좌표 미상) ${noteCount}곳`);
   if (showerTotal < 30) {
     console.log(`  ⚠ 샤워장이 ${showerTotal}건뿐입니다. 카카오/공공데이터에 해변 샤워장이 거의 없어 자동 수집 한계 —`);
-    console.log('    data-raw/showers-manual.json에 방문객 상위 해수욕장부터 채우세요 (기획안 §5).');
+    console.log('    data-raw/showers-manual.json에 아래 우선순위대로 채우세요 (이용객 순위 기준).');
+    const hasShower = new Set(facilities.filter((f) => f.type === 'shower').map((f) => f.spotId));
+    const todo = keptSpots
+      .filter((s) => s.type === 'beach' && s.note && !hasShower.has(s.id) && !s.showerNote)
+      .map((s) => ({ s, rank: Number(s.note.match(/(\d+)위/)?.[1] ?? 999) }))
+      .sort((a, b) => a.rank - b.rank)
+      .slice(0, 15);
+    for (const { s, rank } of todo) console.log(`      ${String(rank).padStart(2)}위  ${s.name} (${s.region})`);
   }
   console.log(`  최종 시설 ${facilities.length}건 (스팟당 최대 ${MAX_FACILITIES_PER_SPOT})`);
   return { spots: keptSpots, facilities };

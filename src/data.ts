@@ -16,9 +16,14 @@ export interface Spot {
   region: string;
   lat: number;
   lng: number;
-  /** 해수욕장: 개장 기간 (M-D). 계곡: 없음 */
+  /**
+   * 해수욕장 개장 기간 (M.D 형식). 출처는 해양수산부 2024년 개폐장일정이라
+   * 연도별로 며칠씩 달라질 수 있어 '대략의 시즌'으로 다룬다. 계곡은 없음.
+   */
   openStart?: string;
   openEnd?: string;
+  /** 공식 목록에 '미개장'으로 표기된 해수욕장 (헛걸음 방지용) */
+  notOpening?: boolean;
   /** 계곡: 생활안전지도 물놀이관리지역 등급 */
   risk?: 'normal' | 'caution' | 'danger';
   /** 이용객 순위 등 한 줄 참고 */
