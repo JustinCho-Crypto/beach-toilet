@@ -126,6 +126,16 @@
       "spotName": "무창포해수욕장",
       "note": "유료 샤워장 있음 (요금 미확인)",
       "source": "보령시 무창포해수욕장 안내 — 샤워시설·탈의실 보유, 유료 공용 샤워장. 금액은 공식 고시 미확인 https://www.brcn.go.kr/tour/sub03_02_02.do"
+    },
+    {
+      "spotName": "삼척해변",
+      "note": "샤워장 있음 (요금 미확인)",
+      "source": "삼척시 공식 관광 홈페이지 삼척해변 편의시설 안내 — '샤워장' 명시, 요금은 미고시 https://www.samcheok.go.kr/tour/01456/01462/02977.web"
+    },
+    {
+      "spotName": "낙산해수욕장",
+      "note": "온수 샤워장 있음 (요금 미확인)",
+      "source": "트립닷컴 — 낙산해수욕장 온수샤워장 위치 소개 (요금 정보 없음) https://kr.trip.com/moments/detail/yangyang-14775-12619515/"
     }
   ]
 }
