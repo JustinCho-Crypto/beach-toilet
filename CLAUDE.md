@@ -31,9 +31,10 @@
 
 바퀴를 새로 만들지 말고 토스가 제공하는 것을 쓴다.
 
-- **`@apps-in-toss/web-framework`** — 웹뷰 미니앱용. 위치·저장소·광고·공유가 여기 있다. 현재 `src/bridge.ts`·`src/ads.ts`가 브라우저 API로 임시 구현돼 있고, **M3에서 이 두 파일만 교체**하면 되도록 격리해 뒀다.
-- **저장소는 반드시 공식 `Storage`** — 커뮤니티 AsyncStorage는 운영 토스에서 데이터가 유실된다(ait-factory 하드룰).
-- **광고는 인앱 광고 2.0 API** (`loadFullScreenAd`/`showFullScreenAd`).
+- **`@apps-in-toss/web-framework`** — 웹뷰 미니앱용. 위치·저장소·광고·프로모션이 여기 있다. **연동 완료(2026-07-27).** 네이티브 의존은 `src/bridge.ts`(위치·저장소)·`src/ads.ts`(광고)·`src/points.ts`(프로모션)에만 있다.
+- **저장소는 반드시 공식 `Storage`** — 커뮤니티 AsyncStorage는 운영 토스에서 데이터가 유실된다(ait-factory 하드룰). 공식 Storage는 비동기라 `bridge.ts`가 in-memory 캐시를 앞에 두고 동기 API를 유지한다. **부팅 시 `initPoints()`를 반드시 await할 것** — 하이드레이션 전에는 `storageGet`이 fallback만 돌려준다.
+- **광고는 인앱 광고 2.0 API** (`loadFullScreenAd`/`showFullScreenAd`, 배너는 `TossAds.attachBanner`).
+- **`isSupported()`는 항상 try/catch로 감쌀 것** — 계약상 boolean을 돌려주지만 토스 웹뷰 밖에서는 예외를 던진다(`fetchTossAd_isSupported is not a constant handler` 실측). `ads.ts`의 `isSupported()` 래퍼를 쓴다. 감싸지 않으면 부팅이 통째로 죽는다.
 - **토스 3D 이모지 CDN**: `https://static.toss.im/3d-emojis/u{유니코드}.png` — 아이콘을 새로 그리기 전에 여기 있는지 먼저 본다.
 - TDS(토스 디자인 시스템) 컴포넌트/톤을 따른다. 단 **일반 이모지 문자를 UI에 쓰지 말 것** (justin 결정) — 아이콘은 `src/ui.ts`의 TDS 톤 SVG를 쓴다.
 
@@ -70,15 +71,33 @@
 | `npm run build` | 타입체크 + 빌드 |
 | `npm run build:data` | 공공데이터 배치 → `src/data.generated.ts` |
 | `npm run deploy` | GitHub Pages 재배포 |
+| `npm run ait:test` | **테스트** .ait 빌드 → `release/beachtoilet-test.ait` |
+| `npm run ait:live` | **운영** .ait 빌드 → `release/beachtoilet-live.ait` |
+| `npm run ait:verify` | 빌드된 .ait에 박힌 광고 ID·프로모션 코드 역검사 |
+
+### 테스트 빌드 / 운영 빌드 — 반드시 갈라서 만든다 ★
+
+**런타임으로는 구분할 수 없다.** QR 테스트도 실제 토스 앱에서 돌아서 `getOperationalEnvironment()`가 `'toss'`를 돌려준다(샌드박스만 구분됨). 공식 답변: *"QR 환경에서 실코드 적용시, 실제 광고가 노출됩니다 / 실제로 유저 포인트가 지급됩니다"* — [techchat #4352](https://techchat-apps-in-toss.toss.im/t/id-qr/4352). 실 광고 ID로 반복 테스트하면 **제재 대상**이고, 실 프로모션 코드로 테스트하면 **진짜 돈이 나간다.**
+
+그래서 `config.ts`의 `IS_LIVE`(= `VITE_AIT_ENV === 'live'`)로 빌드 시점에 가른다. **기본값은 test** — 플래그를 깜빡해도 안전한 쪽으로 실패한다.
+
+| | 광고 지면 | 프로모션 | `DEV_BYPASS_GPS` |
+|---|---|---|---|
+| test (기본) | `ait-ad-test-*` (공식 고정값) | `TEST_...` (지급·과금 없음) | `true` — 해변 밖에서도 제보 테스트 가능 |
+| live | 콘솔 발급 운영 ID | 실코드 (실제 지급) | `false` (강제) |
+
+빌드 후 **반드시 `npm run ait:verify`로 확인할 것.** 환경변수는 `ait build` → vite 자식 프로세스로 전달돼야 번들에 박히는데, 이 전달이 끊기면 조용히 test 아티팩트가 나온다. 산출물을 역검사하는 게 유일한 확인 수단이다.
 
 ### 배포
 
 **두 갈래가 있고 목적이 다르다. 혼동하지 말 것.**
 
-1. **GitHub Pages** (현재 동작) — https://justincho-crypto.github.io/beach-toilet/
+1. **GitHub Pages** — https://justincho-crypto.github.io/beach-toilet/
    저장소: https://github.com/JustinCho-Crypto/beach-toilet (public, `gh-pages` 브랜치)
    목적은 **카카오 도메인 등록 + 실 지도 동작 확인**이다. 앱인토스 출시와는 무관.
-2. **앱인토스 배포** (미연결) — `~/.ait/credentials`에 mTLS 인증 정보가 준비돼 있어 **자동 배포가 가능한 상태**다. 단 `ait` CLI가 이 프로젝트 의존성에 아직 없다 (ait-factory 템플릿은 `ait deploy`를 쓴다). 출시 단계에서 CLI를 붙이고 `BASE=/` 빌드 → 배포로 연결할 것.
+2. **앱인토스 배포** — `ait` CLI가 의존성에 들어와 있고 `~/.ait/credentials`의 워크스페이스 토큰으로 인증된다. `npm run ait:test`/`ait:live`로 빌드한 뒤 `npx ait deploy`로 업로드.
+
+> **mTLS 인증서는 배포와 무관하다.** 파트너사 **자체 서버**가 토스 서버와 통신할 때(서버 간 API)만 쓴다. 이 앱은 포인트 지급을 클라이언트 브릿지 `grantPromotionReward()`로 처리하므로 인증서가 필요 없다. 나중에 스마트 발송·파트너사 로그인 같은 서버 간 API를 붙이면 그때 필요하며, 보관 위치는 `~/.ait/certs/beachtoilet/` (CN=`beachtoilet`, 저장소에 절대 커밋 금지).
 
 ---
 
@@ -90,8 +109,9 @@
    - 배너(`banner`)는 상시 하단. **한 흐름에 풀스크린 광고를 연달아 띄우지 말 것** (앱인토스 '과도한 광고 노출' 가이드).
    - 포인트 원장: `totalEarned()` − `totalConverted()` = `pendingPoints()`. 실지급 API 연동 지점은 `convertPending()`.
 2. **보상 확률표·한도는 `config.ts`에서만**: 100원 99.4% / 500원 0.4% / 1,000원 0.2% (EV≈103원), 1일 10회.
-   ⚠️ **광고 회당 수익 < EV면 역마진.** M3 전 금송아지 실측 eCPM 대조 필수.
-3. **어뷰징 방어를 약화시키지 말 것**: GPS 200m 인증 + 같은 시설 1인 1일 1회. `DEV_BYPASS_GPS`는 M3에서 반드시 `false`.
+   ⚠️ **광고 회당 수익 < EV면 역마진.** 출시 전 금송아지 실측 eCPM 대조 필수 (미완).
+3. **어뷰징 방어를 약화시키지 말 것**: GPS 200m 인증 + 같은 시설 1인 1일 1회.
+   `DEV_BYPASS_GPS`는 `!IS_LIVE`에 결속돼 있다 — **수동 플래그로 되돌리지 말 것.** 운영 빌드에서 자동으로 꺼지므로 '끄는 걸 깜빡하는' 사고가 구조적으로 불가능하다.
 4. **외부 이동 금지** — 외부 브라우저/앱 스킴으로 유저를 내보내는 코드 금지 (앱인토스 정책).
 5. **이모지 UI 금지** — `src/ui.ts`의 SVG만.
 6. **제보 항목 고정** — 별점 · 청결도 · 요금 + 샤워실만 온수. 텍스트 리뷰·사진 없음. 항목 추가는 기획 변경(justin 결정).
@@ -165,7 +185,8 @@
 
 ## 5. 다음 할 일
 
-1. **샤워장 시딩 계속** (§4-2) — 이용객 상위권부터.
-2. **제보 서버 연동** — 현재 제보가 `localStorage`에만 쌓여 **유저 간 공유가 안 된다**. 코어 루프가 실제로 작동하려면 필요. 출시 관점에서 가장 급한 항목.
-3. **M3 전환** — 광고/위치/저장소를 `@apps-in-toss/web-framework`로 교체, `DEV_BYPASS_GPS=false`, 실 eCPM으로 역마진 검증.
-4. **앱인토스 배포 경로 연결** — `ait` CLI 붙이기.
+1. **제보 서버 연동** — 현재 제보가 기기 로컬(공식 `Storage`)에만 쌓여 **유저 간 공유가 안 된다**. "남이 올린 정보를 본다"는 코어 루프가 실제로는 작동하지 않는 상태. 출시 관점에서 가장 급한 항목.
+2. **콘솔 프로모션 테스트 통과** — `npm run ait:test` 아티팩트를 올려 QR로 실행 → 포인트 전환 1회 성공 → 콘솔에서 '시작하기' 활성화. 이걸 통과해야 실지급이 열린다.
+3. **역마진 검증** — 지급 EV≈103원 vs 보상형 광고 회당 실수익. 금송아지 실측 eCPM(한계값 기준, 평시 5원)으로 대조. 역마진이면 확률표를 조정한다.
+4. **샤워장 시딩 계속** (§4-2) — 이용객 상위권부터. 현재 44건(좌표 5 + 안내문구 39).
+5. **출시** — `npm run ait:live` → `npm run ait:verify`로 LIVE 확인 → `npx ait deploy` → 콘솔 검토 요청(영업일 2~3일).
