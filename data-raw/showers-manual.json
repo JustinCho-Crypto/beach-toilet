@@ -216,6 +216,55 @@
       "spotName": "아야진해수욕장",
       "note": "온수 샤워장 있음 (요금 미확인 — 검색 요약: 성인 5,000원/어린이 3,000원)",
       "source": "강원 고성군 아야진해수욕장 (공식 페이지에서는 요금 미표기) https://www.ayajinbeach.co.kr/"
+    },
+    {
+      "spotName": "왜목마을해수욕장",
+      "note": "샤워장 무료 · 화장실·개수대 완비",
+      "source": "충남 당진시 왜목마을 공식 관광 홈페이지 https://www.dangjin.go.kr/prog/tursmCn/tour/sub02_01_03/view.do?cntno=81"
+    },
+    {
+      "spotName": "구조라해수욕장",
+      "name": "구조라해수욕장 샤워장",
+      "lat": 34.8849,
+      "lng": 128.6269,
+      "fee": "paid",
+      "feeAmount": 2000,
+      "source": "거제시 공식 관광 홈페이지 — 중앙 건물 2층 샤워장 대인 2천원·소인 1천원, 1층 코인 샤워기 https://www.geoje.go.kr/user/smarttour/view.geoje?basicSid=15&tourFoodStyle=A01&menuCd=DOM_000008503001000000&pageIndex=1"
+    },
+    {
+      "spotName": "봉수대해변",
+      "note": "샤워장 있음 (요금 미확인 — 고성군 조례 미검증)",
+      "source": "강원 고성군 봉수대해변 공식 https://www.gwgs.go.kr/prog/tursmCn/tour/sub02_02/view.do?cntno=74"
+    },
+    {
+      "spotName": "웅천해수욕장",
+      "note": "코인 샤워장 5분에 500원 · 남녀 각 4개",
+      "source": "전남 여수시 웅천친수공원 공식 https://www.yeosu.go.kr/tour/travel/info_each_area?mode=view&idx=870"
+    },
+    {
+      "spotName": "십리포해수욕장",
+      "note": "샤워장 있음 (요금 미확인)",
+      "source": "인천 옹진군 영흥도 십리포해수욕장 (캠핑장 편의시설) http://xn--oy2b27mhsar7i4qbz53booc.kr"
+    },
+    {
+      "spotName": "와현모래숲해수욕장",
+      "note": "샤워장 있음 · 장애인 무료 (요금 미확인 — 공식 고시 미확인)",
+      "source": "경남 거제시 와현모래숲 공식 https://tour.geoje.go.kr/user/smarttour/view.geoje?basicSid=22&tourFoodStyle=A01&menuCd=DOM_000008503001000000&pageIndex=1"
+    },
+    {
+      "spotName": "삼양해수욕장",
+      "note": "샤워장 1개소 (요금 미확인)",
+      "source": "제주시 삼양해수욕장 공식 https://www.visitjeju.net/kr/detail/view?contentsid=CONT_000000000500301"
+    },
+    {
+      "spotName": "백도해변",
+      "note": "샤워장 · 어른 3,000원 · 군인/청소년 2,000원 · 어린이(초등 2학년까지) 1,000원",
+      "source": "강원 고성군 백도해변 공식 https://www.gwgs.go.kr/prog/tursmCn/tour/sub02_02/view.do?cntno=73"
+    },
+    {
+      "spotName": "화진포해변",
+      "note": "샤워장 · 어른 4,000원 · 군인/청소년 3,000원 · 어린이 2,000원",
+      "source": "강원 고성군 화진포해변 공식 https://www.gwgs.go.kr/prog/tursmCn/tour/sub02_02/view.do?cntno=85"
     }
   ]
 }
