@@ -303,6 +303,40 @@ async function stageSpotPois(spots) {
   return c.write(out);
 }
 
+/**
+ * 지역 단위 샤워장 스윕. 카카오 키워드 검색은 편차가 커서 스팟 이름으로는 안 잡히는 게
+ * 지역 이름으로는 잡힌다 ('대천해수욕장 샤워장' → 0건, '충남 해수욕장 샤워장' → 대천 공영샤워장).
+ * 스팟별 검색과 상호 보완이라 둘 다 돌린다. 지역 수만큼만 호출하므로 비용이 작다.
+ */
+async function stageRegionShowers() {
+  const c = cache(path.join(CACHE, '4b-region-showers.json'));
+  const cached = c.read();
+  if (cached && !args.force) {
+    console.log(`[4b] 지역 샤워 스윕 (캐시): ${cached.length}건`);
+    return cached;
+  }
+
+  console.log('[4b] 지역 단위 샤워장 스윕');
+  const found = [];
+  let done = 0;
+  await mapLimit(COASTAL, CONCURRENCY, async (region) => {
+    for (const term of ['해수욕장 샤워장', '해변 샤워장']) {
+      const rows = await keyword(KEY, `${region} ${term}`, { maxPages: 2 });
+      for (const r of rows) {
+        if (SHOWER_NOISE.test(r.name) || !isShowerName(r.name)) continue;
+        found.push(r);
+      }
+    }
+    done += 1;
+    progress('  region-shower', done, COASTAL.length);
+  });
+  const m = new Map();
+  for (const r of found) m.set(`${normalizeName(r.name)}@${r.lat.toFixed(4)}`, r);
+  const out = [...m.values()];
+  console.log(`  → ${out.length}건`);
+  return c.write(out);
+}
+
 // ---------- 5. 배정 + 출력 ----------
 
 function slug(prefix, i) { return `${prefix}${i}`; }
@@ -355,15 +389,18 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
     return { spot: best, dist: bestD };
   };
 
-  // 같은 시설이 표준데이터와 카카오 POI 양쪽에 있을 수 있어 좌표 근접으로 중복 제거
+  // 같은 시설이 표준데이터와 카카오 POI 양쪽에 있을 수 있어 좌표 근접으로 중복 제거.
+  // 단 종류가 다르면 중복이 아니다 — 샤워장은 대개 화장실 바로 옆에 붙어 있어서
+  // 종류를 안 보면 희소한 샤워장이 화장실에 밀려 사라진다(대천 공영샤워장 실종 사례).
   const placed = [];
-  const isDuplicate = (lat, lng, name) =>
-    placed.some((p) => haversineM(p.lat, p.lng, lat, lng) < 40
-      || (normalizeName(p.name) === normalizeName(name) && haversineM(p.lat, p.lng, lat, lng) < 300));
+  const isDuplicate = (lat, lng, name, type) =>
+    placed.some((p) => p.type === type
+      && (haversineM(p.lat, p.lng, lat, lng) < 40
+        || (normalizeName(p.name) === normalizeName(name) && haversineM(p.lat, p.lng, lat, lng) < 300)));
 
   const add = (spotId, fac, dist) => {
     bySpot.get(spotId).push({ ...fac, spotId, _d: dist });
-    placed.push({ lat: fac.lat, lng: fac.lng, name: fac.name });
+    placed.push({ lat: fac.lat, lng: fac.lng, name: fac.name, type: fac.type });
   };
 
   // 수작업 시딩 샤워장이 최우선 — 사람이 확인한 값이라 가장 신뢰도가 높다.
@@ -390,7 +427,7 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
     // (캐시를 버리면 API 쿼터를 다시 쓰게 된다).
     if (!isShowerName(s.name)) return;
     const hit = place(s);
-    if (!hit || isDuplicate(s.lat, s.lng, s.name)) return;
+    if (!hit || isDuplicate(s.lat, s.lng, s.name, 'shower')) return;
     add(hit.spot.id, { id: `s${i}`, type: 'shower', name: s.name, lat: s.lat, lng: s.lng }, hit.dist);
     showerCount += 1;
   });
@@ -398,7 +435,7 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
   let poiToiletCount = 0;
   pois.toilets.forEach((t, i) => {
     const hit = place(t);
-    if (!hit || isDuplicate(t.lat, t.lng, t.name)) return;
+    if (!hit || isDuplicate(t.lat, t.lng, t.name, 'toilet')) return;
     add(hit.spot.id, { id: `kt${i}`, type: 'toilet', name: t.name, lat: t.lat, lng: t.lng, fee: 'free' }, hit.dist);
     poiToiletCount += 1;
   });
@@ -408,9 +445,9 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
   candidates.forEach((t) => {
     const pos = coords[t.id];
     if (!pos) return;
-    const hit = place({ lat: pos.lat, lng: pos.lng });
-    if (!hit || isDuplicate(pos.lat, pos.lng, t.name)) return;
     const isShower = t.type === 'shower';
+    const hit = place({ lat: pos.lat, lng: pos.lng });
+    if (!hit || isDuplicate(pos.lat, pos.lng, t.name, isShower ? 'shower' : 'toilet')) return;
     add(hit.spot.id, {
       id: `t${t.id}`, type: isShower ? 'shower' : 'toilet',
       name: t.name, lat: pos.lat, lng: pos.lng, fee: 'free',
@@ -434,7 +471,14 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
   const keptSpots = spots.filter((s) => bySpot.get(s.id).length > 0);
   const facilities = [];
   for (const s of keptSpots) {
-    const list = bySpot.get(s.id).sort((a, b) => a._d - b._d).slice(0, MAX_FACILITIES_PER_SPOT);
+    // 샤워장은 화장실보다 훨씬 희소하고(전국 16건) 이 앱의 차별화 지점이라
+    // 개수 제한에서 절대 잘리지 않도록 먼저 채운다. 나머지를 거리순 화장실로 메운다.
+    const all = bySpot.get(s.id).sort((a, b) => a._d - b._d);
+    const showers = all.filter((f) => f.type === 'shower');
+    const toilets = all.filter((f) => f.type !== 'shower');
+    const list = [...showers, ...toilets].slice(0, Math.max(MAX_FACILITIES_PER_SPOT, showers.length));
+    // 화면에는 다시 거리순으로 보여준다
+    list.sort((a, b) => a._d - b._d);
     for (const f of list) { delete f._d; facilities.push(f); }
   }
 
@@ -476,6 +520,7 @@ import type { Spot, Facility } from './data';
   const limited = args.limit ? candidates.slice(0, Number(args.limit)) : candidates;
   const coords = await stageGeocode(limited);
   const pois = await stageSpotPois(allSpots);
+  pois.showers = [...pois.showers, ...await stageRegionShowers()];
   emit(assign(spotsRaw, limited, coords, pois));
   console.log(`카카오 API 호출 ${callCount()}회`);
 })();
