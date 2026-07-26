@@ -89,9 +89,34 @@ function normalizeName(s) {
 // 'CU 강화동막해수욕장점'은 탈락. 이름이 해당 단어로 '끝나야' 실제 그 장소로 본다.
 function isSpotName(name, term) {
   const n = normalizeName(name);
-  if (!n.endsWith(term)) return false;
+  if (!n.endsWith(term) || n.length <= term.length) return false;
   // '00해수욕장' 앞에 상호가 붙은 경우(공백으로 구분)를 배제
   return !/\s/.test(name.trim().replace(/\(.*?\)/g, '').trim());
+}
+
+/**
+ * 같은 장소가 '경포해변'/'경포해수욕장'처럼 두 이름으로 잡히므로 근접 중복을 제거한다.
+ * 더 통용되는 '해수욕장' 쪽을 남긴다.
+ */
+function dedupeNearby(list, radiusM = 600) {
+  const base = (n) => normalizeName(n).replace(/(해수욕장|해변|계곡)$/, '');
+  const sorted = [...list].sort((a, b) => {
+    const ax = a.name.endsWith('해수욕장') ? 0 : 1;
+    const bx = b.name.endsWith('해수욕장') ? 0 : 1;
+    return ax - bx;
+  });
+  const kept = [];
+  for (const s of sorted) {
+    const dup = kept.some((k) => {
+      const d = haversineM(k.lat, k.lng, s.lat, s.lng);
+      if (d < radiusM) return true;
+      // '농소몽돌해수욕장'/'농소몽돌해변'처럼 같은 곳을 다르게 부르는 경우는 조금 더 멀어도 병합.
+      // 이름이 다르면(인접한 별개 해변) 병합하지 않는다 — '몽돌'은 흔한 이름이라 전국에 여러 곳 있다.
+      return d < 1500 && base(k.name) === base(s.name);
+    });
+    if (!dup) kept.push(s);
+  }
+  return kept;
 }
 
 async function stageSpots() {
@@ -103,26 +128,29 @@ async function stageSpots() {
   }
 
   console.log('[1/5] 카카오 키워드 검색으로 스팟 수집');
-  const collect = async (regions, term, type) => {
+  // 동해안 상당수는 '○○해변'으로 불린다(강릉 19곳 중 대부분). '해수욕장'만 받으면
+  // 이 지역이 통째로 빠지므로 두 표기를 모두 수집한 뒤 근접 중복을 제거한다.
+  const collect = async (regions, terms, type) => {
     const seen = new Map();
     let done = 0;
     await mapLimit(regions, CONCURRENCY, async (region) => {
-      const rows = await keyword(KEY, `${region} ${term}`);
-      for (const r of rows) {
-        if (!isSpotName(r.name, term)) continue;
-        // 같은 이름이 여러 지역 검색에 걸리므로 이름+대략 위치로 중복 제거
-        const key = `${normalizeName(r.name)}@${r.lat.toFixed(2)},${r.lng.toFixed(2)}`;
-        if (seen.has(key)) continue;
-        seen.set(key, { ...r, type, region });
+      for (const term of terms) {
+        const rows = await keyword(KEY, `${region} ${term}`);
+        for (const r of rows) {
+          if (!isSpotName(r.name, term)) continue;
+          const key = `${normalizeName(r.name)}@${r.lat.toFixed(2)},${r.lng.toFixed(2)}`;
+          if (seen.has(key)) continue;
+          seen.set(key, { ...r, type, region });
+        }
       }
       done += 1;
-      progress(`  ${term}`, done, regions.length);
+      progress(`  ${terms[0]}`, done, regions.length);
     });
-    return [...seen.values()];
+    return dedupeNearby([...seen.values()]);
   };
 
-  const beaches = await collect(COASTAL, '해수욕장', 'beach');
-  const valleys = await collect(VALLEY_REGIONS, '계곡', 'valley');
+  const beaches = await collect(COASTAL, ['해수욕장', '해변'], 'beach');
+  const valleys = await collect(VALLEY_REGIONS, ['계곡'], 'valley');
   console.log(`  → 해수욕장 ${beaches.length}곳 · 계곡 ${valleys.length}곳`);
   return c.write({ beaches, valleys });
 }

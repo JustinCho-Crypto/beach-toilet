@@ -55,10 +55,9 @@
       "lng": 128.90748,
       "fee": "paid",
       "feeAmount": 2000,
-      "source": "위치 근거가 '중앙광장 중심'이라는 서술뿐이라 중앙통로 화장실 좌표를 대용으로 사용 — 오차 가능. 유저 제보로 보정 필요. 요금 2,000원은 관광 안내 기준(공식 고시 미확인)."
+      "source": "강릉시 관광포털 경포해변 시설이용료 '샤워장(2,000원)' https://www.gn.go.kr/tour/sub03_02_03.do — 요금은 공식 확인됨. 위치는 '중앙광장 중심' 서술뿐이라 중앙통로 화장실 좌표를 대용, 오차 가능."
     }
   ],
-
   "_spotShowerNotes_readme": [
     "'샤워장이 있다'는 건 확인됐지만 좌표를 못 구한 스팟의 안내 문구.",
     "없는 좌표를 지어내 핀을 찍는 대신 스팟 상세에 한 줄로 보여준다.",
@@ -82,6 +81,31 @@
       "spotName": "해운대해수욕장",
       "note": "샤워탈의장 1회(60초) 1,000원 · 간이샤워장은 공용화장실 1·2·3호 앞",
       "source": "해운대구청 이용안내 https://www.haeundae.go.kr/tour/index.do?menuCd=DOM_000000302001002000 (2026)"
+    },
+    {
+      "spotName": "사천해변",
+      "note": "샤워장·탈의실 있음 · 시설이용료 2,000~10,000원",
+      "source": "강릉시 관광포털 해변 19개소 https://www.gn.go.kr/tour/sub03_02_10.do"
+    },
+    {
+      "spotName": "송정해변",
+      "note": "샤워장·탈의실 있음 · 시설이용료 없음",
+      "source": "강릉시 관광포털 https://www.gn.go.kr/tour/sub03_02_11.do"
+    },
+    {
+      "spotName": "안목해변",
+      "note": "샤워실·탈의실 있음 · 시설이용료 없음",
+      "source": "강릉시 관광포털 https://www.gn.go.kr/tour/sub03_02_13.do"
+    },
+    {
+      "spotName": "안인해변",
+      "note": "샤워실·탈의실 있음 · 시설이용료 없음",
+      "source": "강릉시 관광포털 https://www.gn.go.kr/tour/sub03_02_14.do"
+    },
+    {
+      "spotName": "도직해변",
+      "note": "샤워장·탈의실 있음 · 시설이용료 없음",
+      "source": "강릉시 관광포털 https://www.gn.go.kr/tour/sub03_02_06.do"
     }
   ]
 }
