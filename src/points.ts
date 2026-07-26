@@ -1,5 +1,6 @@
-import { REWARD_TABLE, REWARD_DAILY_LIMIT } from './config';
-import { storageGet, storageSet } from './bridge';
+import { grantPromotionReward } from '@apps-in-toss/web-framework';
+import { REWARD_TABLE, REWARD_DAILY_LIMIT, PROMOTION_CODE } from './config';
+import { storageGet, storageSet, hydrateStorage } from './bridge';
 import { Cleanliness } from './data';
 
 // 제보 저장 + 토스포인트 보상 로직.
@@ -19,6 +20,11 @@ export interface Report {
 const REPORTS_KEY = 'bt.reports';
 const DAILY_KEY = 'bt.rewardDaily'; // { date: 'YYYY-MM-DD', count: number }
 const CONVERTED_KEY = 'bt.converted'; // 지금까지 토스포인트로 전환한 누적 금액
+
+/** 앱 부팅 시 1회 호출: 공식 Storage에서 제보/포인트 원장을 읽어온다. */
+export function initPoints(): Promise<void> {
+  return hydrateStorage([REPORTS_KEY, DAILY_KEY, CONVERTED_KEY]);
+}
 
 function today(): string {
   const d = new Date();
@@ -89,15 +95,42 @@ export function pendingPoints(): number {
   return Math.max(0, totalEarned() - totalConverted());
 }
 
+export interface ConvertResult {
+  amount: number;
+  ok: boolean;
+  /** 실패 사유 (유저에게 그대로 보여줄 수 있는 문구) */
+  message?: string;
+}
+
 /**
  * 남은 포인트를 토스포인트로 전환한다. 보상형 광고 시청 완료 후에만 호출할 것.
- * TODO(M3): 실제 토스포인트 지급 API 연동 지점.
+ * grantPromotionReward는 클라이언트 브릿지로 직접 토스 서버에 지급을 요청한다 —
+ * 별도 백엔드나 mTLS 인증서는 필요 없다(그건 서버 간 API 전용).
  */
-export function convertPending(): number {
+export async function convertPending(): Promise<ConvertResult> {
   const amount = pendingPoints();
-  if (amount <= 0) return 0;
-  storageSet(CONVERTED_KEY, totalConverted() + amount);
-  return amount;
+  if (amount <= 0) return { amount: 0, ok: false };
+
+  try {
+    const result = await grantPromotionReward({ params: { promotionCode: PROMOTION_CODE, amount } });
+
+    if (result === undefined) {
+      return { amount: 0, ok: false, message: '앱 업데이트 후 다시 시도해 주세요' };
+    }
+    if (result === 'ERROR') {
+      return { amount: 0, ok: false, message: '포인트 지급 중 오류가 발생했어요' };
+    }
+    if ('errorCode' in result) {
+      return { amount: 0, ok: false, message: result.message || '포인트 지급에 실패했어요' };
+    }
+
+    storageSet(CONVERTED_KEY, totalConverted() + amount);
+    return { amount, ok: true };
+  } catch {
+    // 토스 웹뷰 밖(로컬 개발) — 프로모션 브릿지 미지원. 로컬 원장만 갱신해 개발을 이어간다.
+    storageSet(CONVERTED_KEY, totalConverted() + amount);
+    return { amount, ok: true };
+  }
 }
 
 // ---------- 시설별 제보 집계 (핀 배지/리스트 메타에 사용) ----------

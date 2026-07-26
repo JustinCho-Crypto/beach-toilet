@@ -1,5 +1,10 @@
 node_modules
 dist
+# 빌드 산출물 — 매 빌드마다 deploymentId가 바뀌어 diff만 커진다. 필요하면 재빌드할 것.
+*.ait
+release/
+# ait build가 granite.config.ts에서 생성하는 파일 (원본은 granite.config.ts)
+.granite/
 .env
 .env.local
 .env.*.local

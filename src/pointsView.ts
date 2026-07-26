@@ -26,8 +26,12 @@ async function onConvert(): Promise<void> {
       toast('광고 시청을 완료해야 전환할 수 있어요');
       return;
     }
-    const converted = convertPending();
-    toast(`토스포인트 ${converted.toLocaleString()}원으로 전환됐어요`);
+    const { amount, ok, message } = await convertPending();
+    if (ok) {
+      toast(`토스포인트 ${amount.toLocaleString()}원으로 전환됐어요`);
+    } else {
+      toast(message ?? '포인트 전환에 실패했어요. 잠시 후 다시 시도해 주세요');
+    }
     renderPointsView();
   } finally {
     converting = false;

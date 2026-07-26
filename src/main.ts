@@ -1,6 +1,7 @@
 import './style.css';
 import { getCurrentPosition } from './bridge';
 import { initMapView, closeSheet } from './map';
+import { initPoints } from './points';
 import { renderPointsView } from './pointsView';
 import { mountBanner } from './ads';
 import { toast } from './ui';
@@ -26,6 +27,7 @@ async function boot(): Promise<void> {
     b.addEventListener('click', () => switchTab(b.dataset.tab as Tab));
   });
 
+  await initPoints(); // 공식 Storage에서 제보/포인트 원장 하이드레이션
   renderPointsView();
 
   const { pos, isFallback } = await getCurrentPosition();
