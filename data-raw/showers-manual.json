@@ -141,6 +141,81 @@
       "spotName": "신지명사십리해수욕장",
       "note": "샤워장 9동 · 어린이(13세 이하) 1,000원 · 어른(14세 이상) 1,500원",
       "source": "완도군 해양치유완도 공식 홈페이지 신지명사십리해수욕장 이용정보 https://www.wandohealing.or.kr/www/tour/shinji_beach"
+    },
+    {
+      "spotName": "광안리해수욕장",
+      "note": "샤워장 있음 (요금 미확인 — 광안리해양레포츠센터 사이트 접근 불가)",
+      "source": "부산시 광안리해수욕장 공식 https://www.busan.go.kr/depart/ahgwanganri"
+    },
+    {
+      "spotName": "송도해수욕장",
+      "note": "샤워장·탈의실 있음 (요금 미확인)",
+      "source": "부산시 송도해수욕장 공식 https://www.busan.go.kr/depart/ahsongdo"
+    },
+    {
+      "spotName": "다대포해수욕장",
+      "note": "샤워장 있음 (요금 미확인)",
+      "source": "부산시 사하구 다대포해수욕장 공식 https://www.saha.go.kr/tour/contents.do?mId=0101030000"
+    },
+    {
+      "spotName": "함덕해수욕장",
+      "note": "탈의장·샤워장 있음 (요금 미확인 — 검색 요약에만 '성인 2,000원' 기록)",
+      "source": "제주 tjeju.com 함덕해수욕장 시설 안내 https://www.tjeju.com/CS/TourInfo/detail.aspx?cid=710"
+    },
+    {
+      "spotName": "꽃지해수욕장",
+      "note": "인접 공원에 샤워장 있음 (요금 미확인 — 해수욕장 공식 페이지에는 미언급)",
+      "source": "태안군청 꽃지해수욕장 공식 https://www.taean.go.kr/prog/tursmCn/tour/sub02_03/view.do?cntno=33&contentTypeCode=TC002"
+    },
+    {
+      "spotName": "춘장대해수욕장",
+      "note": "부대시설 샤워장 유료 (요금 미확인 — 블로그 참고: 약 2,000원)",
+      "source": "충남 태안 춘장대해수욕장 (공식 사이트 SSL 오류로 접근 불가) http://www.chunjangdaebeach.com/"
+    },
+    {
+      "spotName": "주문진해변",
+      "note": "샤워장 있음 (요금 미확인 — 블로그 참고: 3,500원 균일가)",
+      "source": "강릉시 주문진해수욕장 (공식 홈페이지 404) 일반 블로그 참고 https://ionefree.com"
+    },
+    {
+      "spotName": "일산해수욕장",
+      "note": "샤워실·탈의실 있음 (요금 미확인)",
+      "source": "울산시 동구청 일산해수욕장 공식 https://www.donggu.ulsan.kr/tour/tourBBS/EN/view.do?nttId=168"
+    },
+    {
+      "spotName": "천진해변",
+      "note": "해수욕장 시설 (요금 미확인 — 공식 페이지에 샤워장 언급 없음)",
+      "source": "강원 고성군 천진해변 공식 https://www.gwgs.go.kr/prog/tursmCn/tour/sub02_02/view.do?cntno=81"
+    },
+    {
+      "spotName": "협재해수욕장",
+      "note": "온수 탈의·샤워장 있음 (요금 미확인 — 블로그 추정: 성인 3,000원/어린이 1,500원)",
+      "source": "제주 협재해수욕장 (공식 페이지에서는 온수 탈의·샤워장만 명시, 요금 미표기) https://tour.jejudsi.kr/tour.htm?act=view&id=map14"
+    },
+    {
+      "spotName": "봉포해변",
+      "note": "온수 샤워장 있음 (요금 미확인 — 고성군 조례 가능성, 블로그 참고: 대인 5,000원/소인 3,000원)",
+      "source": "강원 고성군 봉포해변 공식 https://www.gwgs.go.kr/prog/tursmCn/tour/sub02_02/view.do?cntno=76"
+    },
+    {
+      "spotName": "중문색달해수욕장",
+      "note": "공용샤워장 있음 · 개장기간(7~8월) 운영 · 온수 미제공 (요금 미확인 — 블로그 참고: 어른 2,000원/청소년·어린이 1,000원)",
+      "source": "제주 중문색달해수욕장 (공식 요금 미표기) https://www.followdaddy.co.kr/191"
+    },
+    {
+      "spotName": "맹방해수욕장",
+      "note": "야영장·샤워장 있음 (요금 미확인)",
+      "source": "삼척시 맹방해변 공식 https://www.samcheok.go.kr/tour/01456/01466/02201.web"
+    },
+    {
+      "spotName": "송지호해수욕장",
+      "note": "해수욕장 시설 (요금 미확인 — 고성군 조례 관리 가능성, 직접 확인 필요)",
+      "source": "강원 고성군 송지호해수욕장 공식 https://www.songjihobeach.co.kr/"
+    },
+    {
+      "spotName": "아야진해수욕장",
+      "note": "온수 샤워장 있음 (요금 미확인 — 검색 요약: 성인 5,000원/어린이 3,000원)",
+      "source": "강원 고성군 아야진해수욕장 (공식 페이지에서는 요금 미표기) https://www.ayajinbeach.co.kr/"
     }
   ]
 }
