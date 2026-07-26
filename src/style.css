@@ -70,11 +70,6 @@ button { font: inherit; border: 0; background: none; cursor: pointer; color: inh
   display: flex; align-items: center; justify-content: center;
 }
 .pin.spot.valley .pbubble { background: #2BA875; }
-.pin.spot .dbadge {
-  position: absolute; top: -6px; right: -12px; height: 19px; padding: 0 6px; border-radius: 10px;
-  background: #F04452; border: 2px solid #fff; color: #fff; font-size: 10px; font-weight: 800;
-  display: flex; align-items: center;
-}
 .pin.fac .fbubble {
   width: 34px; height: 34px; border-radius: 50%; background: #fff;
   display: flex; align-items: center; justify-content: center;
@@ -206,7 +201,6 @@ button { font: inherit; border: 0; background: none; cursor: pointer; color: inh
 .badge.closed { background: #F2F4F6; color: #8B95A1; }
 .basis { color: #B0B8C1; font-weight: 400; }
 .badge.caution { background: #FFF6DC; color: #D9A400; }
-.badge.danger { background: #FFECEE; color: #F04452; }
 .badge.gps { background: #E8F7EE; color: #1FA85C; }
 .badge.devgps { background: #FFF1E3; color: #D9730D; }
 .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex: none; }

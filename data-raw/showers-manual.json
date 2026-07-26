@@ -111,6 +111,21 @@
       "spotName": "몽산포해수욕장",
       "note": "코인샤워장 09:30~20:00 · 1,000원(6분), 500원당 3분 연장",
       "source": "국립공원공단 태안해안 몽산포 야영장 이용안내 https://reservation.knps.or.kr/contents/C/serviceGuide.do?prdDvcd=C&parkId=B08&deptId=B081002"
+    },
+    {
+      "spotName": "진하해수욕장",
+      "note": "샤워장 2곳 · 세족장 2곳 · 무료 (개장 기간)",
+      "source": "울주군 — 샤워장·세족장 무료 개방, 샤워장 2곳/세족장 2곳/공중화장실 5곳 운영. 한국일보 2025.8 https://www.hankookilbo.com/news/article/A2025080309520001063"
+    },
+    {
+      "spotName": "이호테우해수욕장",
+      "note": "온수 샤워장 3,000원 (일반 기준)",
+      "source": "제주도 2026 해수욕장 운영 계획 — 12개 해수욕장 6.24~9.6 개장, 이호테우 온수 샤워장 일반 3,000원. 헤드라인제주 https://www.headlinejeju.co.kr/news/articleView.html?idxno=594807"
+    },
+    {
+      "spotName": "무창포해수욕장",
+      "note": "유료 샤워장 있음 (요금 미확인)",
+      "source": "보령시 무창포해수욕장 안내 — 샤워시설·탈의실 보유, 유료 공용 샤워장. 금액은 공식 고시 미확인 https://www.brcn.go.kr/tour/sub03_02_02.do"
     }
   ]
 }

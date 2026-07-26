@@ -34,9 +34,8 @@ function spotPinHtml(spot: Spot, selected: boolean): string {
   const valley = spot.type === 'valley';
   const cls = `pin spot${valley ? ' valley' : ''}${selected ? ' selected' : ''}`;
   const icon = valley ? svgValley(20, '#fff') : svgParasol(22, '#fff');
-  const danger = spot.risk === 'danger' ? '<div class="dbadge">위험</div>' : '';
   return `<button type="button" class="${cls}" data-spot="${spot.id}" aria-label="${spot.name}">
-    <div class="pbody"><div class="pbubble">${icon}</div>${danger}</div>
+    <div class="pbody"><div class="pbubble">${icon}</div></div>
     <div class="plabel">${spot.name}</div>
   </button>`;
 }
@@ -124,12 +123,6 @@ function beachBadge(spot: Spot): string {
   return '<span class="badge open">개장 시즌</span>';
 }
 
-function valleyBadge(spot: Spot): string {
-  if (spot.risk === 'danger') return '<span class="badge danger">위험지역</span>';
-  if (spot.risk === 'caution') return '<span class="badge caution">중점관리</span>';
-  return '';
-}
-
 export function openSpotSheet(spotId: string): void {
   if (!state) return;
   const spot = spotById(spotId);
@@ -145,12 +138,11 @@ export function openSpotSheet(spotId: string): void {
     ? (aggs.reduce((s, a) => s + a.avgStars, 0) / aggs.length).toFixed(1)
     : '-';
 
-  const badge = spot.type === 'beach' ? beachBadge(spot) : valleyBadge(spot);
+  const badge = spot.type === 'beach' ? beachBadge(spot) : '';
 
   const subParts = [spot.region];
   if (spot.openStart) subParts.push(`개장 ${spot.openStart}~${spot.openEnd} <span class="basis">(2024년 기준)</span>`);
   if (spot.note) subParts.push(spot.note);
-  if (spot.type === 'valley') subParts.push('생활안전지도 물놀이관리지역');
 
   sheet.innerHTML = `
     <div class="grab"></div>
