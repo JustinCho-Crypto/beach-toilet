@@ -5,3 +5,5 @@ dist
 .env.*.local
 .gh-pages-worktree
 docs/기획안.md
+data-raw/toilets.csv
+data-raw/cache/
