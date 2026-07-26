@@ -23,6 +23,12 @@ export interface Spot {
   risk?: 'normal' | 'caution' | 'danger';
   /** 이용객 순위 등 한 줄 참고 */
   note?: string;
+  /**
+   * 샤워장이 있는 건 확인됐지만 정확한 위치를 모를 때의 안내 문구.
+   * 지자체 공지에 개수·요금만 있고 좌표가 없는 경우가 많다 — 그때 없는 좌표를 지어내
+   * 핀을 찍는 대신 스팟 단위로 알려준다. 정확한 위치는 유저 제보로 채워진다.
+   */
+  showerNote?: string;
 }
 
 export interface Facility {

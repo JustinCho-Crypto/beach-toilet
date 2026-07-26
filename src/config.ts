@@ -10,11 +10,20 @@
 // (도메인 미등록이 토스 웹뷰 무한 로딩의 추정 원인 — techchat 스레드 3859). 실패 시 네이버지도 폴백 검토.
 export const KAKAO_JS_KEY: string = (import.meta.env.VITE_KAKAO_JS_KEY as string | undefined) || '__REPLACE_KAKAO_JS_KEY__';
 
-// 앱인토스 인앱 광고 2.0 지면 ID. 콘솔 발급 후 M3에서 교체.
+// 앱인토스 인앱 광고 2.0 지면 ID (콘솔 발급 완료, 2026-07-26).
 export const AD_GROUP = {
-  banner: 'ait.v2.live.__REPLACE_AT_M3__',
-  rewarded: 'ait.v2.live.__REPLACE_AT_M3__',
+  /** 상시 하단 배너 */
+  banner: 'ait.v2.live.5f9ffc08b15e4961',
+  /** 포인트 전환 시 보상형 — 시청 완료 콜백에서만 토스포인트 지급 */
+  rewarded: 'ait.v2.live.04365262dcbb47f6',
+  /** 제보 시 전면형 */
+  interstitial: 'ait.v2.live.cb506a794f3948fd',
 } as const;
+
+// 제보 시 전면 광고 노출 주기. 매 제보마다 전면형 + 보상형을 연달아 띄우면
+// 사용자당 풀스크린 광고가 2연속이 되어 앱인토스 가이드('과도한 광고 노출 금지')에 걸릴 수 있다.
+// N번째 제보에만 전면형을 노출한다. 1로 두면 매 제보마다.
+export const INTERSTITIAL_EVERY_N_REPORTS = 3;
 
 // 제보 보상 확률표 (기획안 §3 확정: EV ≈ 103.4원, 100원에 근접)
 export const REWARD_TABLE: ReadonlyArray<{ amount: number; p: number }> = [

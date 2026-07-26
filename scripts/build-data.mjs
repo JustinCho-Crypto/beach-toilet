@@ -279,14 +279,22 @@ async function stageSpotPois(spots) {
 
 function slug(prefix, i) { return `${prefix}${i}`; }
 
-/** 수작업 시딩 샤워장 (카카오·공공데이터 모두에 없는 정보라 사람이 채운다). */
-function manualShowers() {
+/** 수작업 시딩 (카카오·공공데이터 모두에 없는 정보라 사람이 채운다). */
+function manualFile() {
   try {
-    const j = JSON.parse(fs.readFileSync(path.join(RAW, 'showers-manual.json'), 'utf8'));
-    return Array.isArray(j.showers) ? j.showers : [];
+    return JSON.parse(fs.readFileSync(path.join(RAW, 'showers-manual.json'), 'utf8'));
   } catch {
-    return [];
+    return {};
   }
+}
+function manualShowers() {
+  const j = manualFile();
+  return Array.isArray(j.showers) ? j.showers : [];
+}
+/** 좌표는 모르지만 '샤워장이 있다'는 건 확인된 스팟의 안내 문구. */
+function manualShowerNotes() {
+  const j = manualFile();
+  return Array.isArray(j.spotShowerNotes) ? j.spotShowerNotes : [];
 }
 
 function assign({ beaches, valleys }, candidates, coords, pois) {
@@ -382,6 +390,18 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
     if (isShower) stdShowerCount += 1; else toiletCount += 1;
   });
 
+  // 좌표 없이 '샤워장 있음'만 확인된 스팟에 안내 문구를 붙인다
+  let noteCount = 0;
+  for (const n of manualShowerNotes()) {
+    const spot = byName.get(n.spotName);
+    if (!spot) {
+      console.warn(`  ⚠ 샤워 안내 '${n.spotName}': 스팟을 찾을 수 없어 건너뜀`);
+      continue;
+    }
+    spot.showerNote = n.note;
+    noteCount += 1;
+  }
+
   // 시설이 하나도 없는 스팟은 버린다 (지도에 띄워도 앱의 목적을 못 채움)
   const keptSpots = spots.filter((s) => bySpot.get(s.id).length > 0);
   const facilities = [];
@@ -393,6 +413,7 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
   console.log(`  스팟 ${keptSpots.length}/${spots.length} (시설 있는 곳만)`);
   const showerTotal = manualCount + showerCount + stdShowerCount;
   console.log(`  샤워장 ${showerTotal} (수작업 ${manualCount} + POI ${showerCount} + 표준데이터 ${stdShowerCount}) · 화장실 ${poiToiletCount + toiletCount}`);
+  console.log(`  샤워 안내 문구(좌표 미상) ${noteCount}곳`);
   if (showerTotal < 30) {
     console.log(`  ⚠ 샤워장이 ${showerTotal}건뿐입니다. 카카오/공공데이터에 해변 샤워장이 거의 없어 자동 수집 한계 —`);
     console.log('    data-raw/showers-manual.json에 방문객 상위 해수욕장부터 채우세요 (기획안 §5).');

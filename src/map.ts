@@ -136,6 +136,7 @@ export function openSpotSheet(spotId: string): void {
       <div class="sep"></div>
       <div class="stat"><div class="v"><span class="staric">${svgStar(13, '#FFB331')}</span> ${avg}</div><div class="k">평균 별점</div></div>
     </div>
+    ${spot.showerNote ? `<div class="shnote">${svgShower(15, '#1B9CF0')}<span>${spot.showerNote}</span></div>` : ''}
     <div class="frows">${facs.map((f) => facilityRowHtml(f, state!.myPos)).join('')}</div>
   `;
   sheet.hidden = false;

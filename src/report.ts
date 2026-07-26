@@ -1,7 +1,7 @@
 import { GPS_RADIUS_M, DEV_BYPASS_GPS } from './config';
 import { facilityById, haversineM, formatDist, Cleanliness } from './data';
 import { LatLng } from './bridge';
-import { showRewardedAd } from './ads';
+import { showRewardedAd, maybeShowReportInterstitial } from './ads';
 import { saveReport, reportedToday, rewardsRemainingToday } from './points';
 import { toast, svgShower, svgWc, svgStar, svgPinLoc, CLEAN_LABEL, CLEAN_CLASS } from './ui';
 import { refreshAfterReport } from './map';
@@ -160,6 +160,8 @@ async function submit(): Promise<void> {
   const facId = currentFacId;
 
   try {
+    // 제보 시 전면형 (N회마다 1회). 보상과 무관하므로 실패해도 흐름을 막지 않는다.
+    await maybeShowReportInterstitial();
     // 광고 시청 완료가 보상 지급 조건 (기획안 §3 — 광고 완료 콜백에서 지급)
     const watched = await showRewardedAd();
     const report = saveReport(

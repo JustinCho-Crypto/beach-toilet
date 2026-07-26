@@ -109,6 +109,14 @@ button { font: inherit; border: 0; background: none; cursor: pointer; color: inh
 .stat .v { font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 3px; }
 .stat .k { font-size: 11.5px; color: #6B7684; margin-top: 2px; }
 .sep { width: 1px; background: #E5E8EB; }
+/* 좌표 미상 샤워장 안내 (핀 대신 스팟 단위로 알려주는 줄) */
+.shnote {
+  display: flex; align-items: center; gap: 7px; margin-top: 12px;
+  background: #EAF6FE; border-radius: 11px; padding: 10px 13px;
+  font-size: 12.5px; font-weight: 600; color: #1B7FC4; line-height: 1.4;
+}
+.shnote svg { flex: none; }
+
 .frows { margin-top: 6px; }
 .frow {
   width: 100%; display: flex; align-items: center; gap: 12px; padding: 13px 0;
