@@ -6,4 +6,6 @@ dist
 .gh-pages-worktree
 docs/기획안.md
 data-raw/toilets.csv
-data-raw/cache/
+# 캐시는 API 호출 결과라 커밋해 보존한다 (재수집 = 카카오 쿼터 재소모).
+# 단 원본 CSV와 중간 후보 목록은 재생성이 공짜라 제외.
+data-raw/cache/2-toilet-candidates.json

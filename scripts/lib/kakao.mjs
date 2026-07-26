@@ -9,6 +9,22 @@ const BASE = 'https://dapi.kakao.com/v2/local';
 let calls = 0;
 export const callCount = () => calls;
 
+// 카카오 로컬 API 무료 한도는 일 10만. 실수로 대량 호출이 나가지 않도록 하드 상한을 둔다.
+// 상한에 닿으면 예외로 즉시 중단 — 캐시는 이미 저장돼 있으므로 재개하면 이어서 진행된다.
+let budget = Number(process.env.KAKAO_MAX_CALLS ?? 3000);
+export function setBudget(n) { budget = n; }
+export const budgetLeft = () => budget - calls;
+
+function spend() {
+  calls += 1;
+  if (calls > budget) {
+    throw new Error(
+      `카카오 API 호출 상한(${budget}회) 도달 — 중단합니다. ` +
+      '의도한 것이면 KAKAO_MAX_CALLS 를 올려서 다시 실행하세요.',
+    );
+  }
+}
+
 function headers(key) {
   return {
     Authorization: `KakaoAK ${key}`,
@@ -22,7 +38,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function request(key, path, params, { retries = 4 } = {}) {
   const url = `${BASE}${path}?${new URLSearchParams(params)}`;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
-    calls += 1;
+    spend();
     let res;
     try {
       res = await fetch(url, { headers: headers(key) });

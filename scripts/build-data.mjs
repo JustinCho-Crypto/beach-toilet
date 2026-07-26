@@ -142,6 +142,15 @@ function sggTokens(spots) {
   return [...set];
 }
 
+// 표준데이터에 섞여 있는 '진짜 해변 샤워장'을 식별한다 (만리포 소라형 샤워장, 가계샤워장 등).
+// 체육센터/스포츠센터 샤워실은 물놀이용이 아니고, 해녀탈의장은 일반 개방 시설이 아니라 제외.
+// 스팟 반경 배정이 지리적 필터를 겸하므로 여기선 이름만 본다.
+const SHOWER_EXCLUDE = /(해녀|체육센터|스포츠센터|문화체육|국민체육|수영장)/;
+function isShowerName(raw) {
+  const n = (raw || '').trim();
+  return /(샤워|탈의)/.test(n) && !SHOWER_EXCLUDE.test(n);
+}
+
 function toiletLabel(raw) {
   let n = (raw || '').trim().replace(/\s+/g, ' ');
   if (!n) return '공중화장실';
@@ -169,11 +178,14 @@ async function stageFilterToilets(spots) {
     if (!addr) continue;
     const compact = addr.replace(/\s+/g, '');
     if (!tokens.some((t) => compact.includes(t))) continue;
+    const rawName = r['화장실명'];
+    const shower = isShowerName(rawName);
     out.push({
       id: r['관리번호'],
+      type: shower ? 'shower' : 'toilet',
       // 표준데이터의 '화장실명'은 건물명인 경우가 많다("해변주유소", "중1동 주민센터").
       // 그대로 쓰면 지도에서 화장실인지 알 수 없어 접미사를 붙인다.
-      name: toiletLabel(r['화장실명']),
+      name: shower ? rawName.trim() : toiletLabel(rawName),
       address: addr,
       open: (r['개방시간'] || '').trim(),
       unisex: r['구분명'] || '',
@@ -240,7 +252,7 @@ async function stageSpotPois(spots) {
       keyword(KEY, `${s.name} 화장실`, { maxPages: 2 }),
     ]);
     for (const r of [...sh, ...sh2]) {
-      if (SHOWER_NOISE.test(r.name) || !/(샤워|탈의)/.test(r.name)) continue;
+      if (SHOWER_NOISE.test(r.name) || !isShowerName(r.name)) continue;
       if (haversineM(s.lat, s.lng, r.lat, r.lng) > ASSIGN_RADIUS_M) continue;
       showers.push(r);
     }
@@ -327,7 +339,9 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
       console.warn(`  ⚠ 수작업 샤워장 '${m.name}': 스팟 '${m.spotName}'을 찾을 수 없어 건너뜀`);
       continue;
     }
-    const { spotName, ...rest } = m;
+    // source는 근거 추적용이라 앱 번들에는 싣지 않는다.
+    const { spotName, source, ...rest } = m;
+    void source;
     add(spot.id, { id: `ms${i}`, type: 'shower', ...rest },
       haversineM(spot.lat, spot.lng, m.lat, m.lng));
     manualCount += 1;
@@ -336,6 +350,9 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
   // 카카오 POI — 해변 시설이 개별 등록돼 있어 표준데이터 주소 지오코딩보다 위치가 정확하다.
   let showerCount = 0;
   pois.showers.forEach((s, i) => {
+    // 캐시가 필터 추가 이전에 만들어졌을 수 있으므로 배정 시점에도 한 번 더 거른다
+    // (캐시를 버리면 API 쿼터를 다시 쓰게 된다).
+    if (!isShowerName(s.name)) return;
     const hit = place(s);
     if (!hit || isDuplicate(s.lat, s.lng, s.name)) return;
     add(hit.spot.id, { id: `s${i}`, type: 'shower', name: s.name, lat: s.lat, lng: s.lng }, hit.dist);
@@ -351,13 +368,18 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
   });
 
   let toiletCount = 0;
+  let stdShowerCount = 0;
   candidates.forEach((t) => {
     const pos = coords[t.id];
     if (!pos) return;
     const hit = place({ lat: pos.lat, lng: pos.lng });
     if (!hit || isDuplicate(pos.lat, pos.lng, t.name)) return;
-    add(hit.spot.id, { id: `t${t.id}`, type: 'toilet', name: t.name, lat: pos.lat, lng: pos.lng, fee: 'free' }, hit.dist);
-    toiletCount += 1;
+    const isShower = t.type === 'shower';
+    add(hit.spot.id, {
+      id: `t${t.id}`, type: isShower ? 'shower' : 'toilet',
+      name: t.name, lat: pos.lat, lng: pos.lng, fee: 'free',
+    }, hit.dist);
+    if (isShower) stdShowerCount += 1; else toiletCount += 1;
   });
 
   // 시설이 하나도 없는 스팟은 버린다 (지도에 띄워도 앱의 목적을 못 채움)
@@ -369,8 +391,8 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
   }
 
   console.log(`  스팟 ${keptSpots.length}/${spots.length} (시설 있는 곳만)`);
-  const showerTotal = manualCount + showerCount;
-  console.log(`  샤워장 ${showerTotal} (수작업 ${manualCount} + POI ${showerCount}) · 화장실 ${poiToiletCount + toiletCount} (POI ${poiToiletCount} + 표준데이터 ${toiletCount})`);
+  const showerTotal = manualCount + showerCount + stdShowerCount;
+  console.log(`  샤워장 ${showerTotal} (수작업 ${manualCount} + POI ${showerCount} + 표준데이터 ${stdShowerCount}) · 화장실 ${poiToiletCount + toiletCount}`);
   if (showerTotal < 30) {
     console.log(`  ⚠ 샤워장이 ${showerTotal}건뿐입니다. 카카오/공공데이터에 해변 샤워장이 거의 없어 자동 수집 한계 —`);
     console.log('    data-raw/showers-manual.json에 방문객 상위 해수욕장부터 채우세요 (기획안 §5).');
