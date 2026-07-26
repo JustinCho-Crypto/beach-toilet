@@ -1,4 +1,4 @@
-import { AD_GROUP, INTERSTITIAL_EVERY_N_REPORTS } from './config';
+import { AD_GROUP } from './config';
 
 // 앱인토스 인앱 광고 2.0 어댑터 (땡모반 구조 승계).
 // 지면 3종 — 배너(상시 하단) / 보상형(포인트 전환) / 전면형(제보 시).
@@ -61,17 +61,17 @@ export function showRewardedAd(): Promise<boolean> {
 }
 
 /**
- * 제보 시 전면형 광고. 보상과 무관하므로 결과를 기다리되 실패해도 흐름을 막지 않는다.
- * INTERSTITIAL_EVERY_N_REPORTS 주기로만 노출한다 (전면형+보상형 2연속 방지).
+ * 제보 시 전면형 광고. 보상과 무관하므로 결과와 상관없이 제보는 저장된다.
+ * 제보와 포인트 전환이 서로 다른 시점이라 풀스크린이 연달아 뜨지 않는다 —
+ * 그래서 주기 제한 없이 매 제보마다 노출한다.
  * TODO(M3): loadFullScreenAd/showFullScreenAd 로 교체. adGroupId = AD_GROUP.interstitial
  */
-export async function maybeShowReportInterstitial(): Promise<void> {
+export async function showReportInterstitial(): Promise<void> {
   const n = Number(sessionStorage.getItem(REPORT_COUNT_KEY) ?? '0') + 1;
   sessionStorage.setItem(REPORT_COUNT_KEY, String(n));
-  if (n % INTERSTITIAL_EVERY_N_REPORTS !== 0) return;
   await showFullScreen(
     '전면형 광고 지면',
-    `개발 플레이스홀더 · ${AD_GROUP.interstitial}<br>제보 ${INTERSTITIAL_EVERY_N_REPORTS}회마다 1회 노출`,
+    `개발 플레이스홀더 · ${AD_GROUP.interstitial}<br>제보 시 노출`,
     [{ id: 'inter-done', label: '닫기', ok: true, primary: true }],
   );
 }

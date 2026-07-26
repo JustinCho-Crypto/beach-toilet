@@ -20,10 +20,10 @@ export const AD_GROUP = {
   interstitial: 'ait.v2.live.cb506a794f3948fd',
 } as const;
 
-// 제보 시 전면 광고 노출 주기. 매 제보마다 전면형 + 보상형을 연달아 띄우면
-// 사용자당 풀스크린 광고가 2연속이 되어 앱인토스 가이드('과도한 광고 노출 금지')에 걸릴 수 있다.
-// N번째 제보에만 전면형을 노출한다. 1로 두면 매 제보마다.
-export const INTERSTITIAL_EVERY_N_REPORTS = 3;
+// 광고 노출 시점 (justin 확정 2026-07-26):
+//   제보 완료 → 전면형만. 포인트는 '앱 내 포인트'로 적립된다.
+//   포인트 탭에서 '토스포인트로 전환' → 보상형. 시청 완료 시에만 전환된다.
+// 두 시점이 분리돼 있어 풀스크린 광고가 연달아 뜨지 않는다.
 
 // 제보 보상 확률표 (기획안 §3 확정: EV ≈ 103.4원, 100원에 근접)
 export const REWARD_TABLE: ReadonlyArray<{ amount: number; p: number }> = [

@@ -12,11 +12,13 @@ export interface Report {
   fee: 'free' | 'paid';
   hotWater?: boolean;
   ts: number;
-  reward: number; // 0이면 보상 없이 제보만 저장됨
+  /** 제보 시점에 적립된 금액. 아직 토스포인트로 전환되기 전의 앱 내 포인트다. */
+  reward: number;
 }
 
 const REPORTS_KEY = 'bt.reports';
 const DAILY_KEY = 'bt.rewardDaily'; // { date: 'YYYY-MM-DD', count: number }
+const CONVERTED_KEY = 'bt.converted'; // 지금까지 토스포인트로 전환한 누적 금액
 
 function today(): string {
   const d = new Date();
@@ -72,8 +74,30 @@ export function saveReport(input: Omit<Report, 'ts' | 'reward'>, rewardEligible:
   return report;
 }
 
-export function totalPoints(): number {
+/** 제보로 적립한 누적 금액 (전환 여부 무관) */
+export function totalEarned(): number {
   return getReports().reduce((sum, r) => sum + r.reward, 0);
+}
+
+/** 이미 토스포인트로 전환한 누적 금액 */
+export function totalConverted(): number {
+  return storageGet<number>(CONVERTED_KEY, 0);
+}
+
+/** 아직 전환하지 않고 남아 있는 포인트 */
+export function pendingPoints(): number {
+  return Math.max(0, totalEarned() - totalConverted());
+}
+
+/**
+ * 남은 포인트를 토스포인트로 전환한다. 보상형 광고 시청 완료 후에만 호출할 것.
+ * TODO(M3): 실제 토스포인트 지급 API 연동 지점.
+ */
+export function convertPending(): number {
+  const amount = pendingPoints();
+  if (amount <= 0) return 0;
+  storageSet(CONVERTED_KEY, totalConverted() + amount);
+  return amount;
 }
 
 // ---------- 시설별 제보 집계 (핀 배지/리스트 메타에 사용) ----------

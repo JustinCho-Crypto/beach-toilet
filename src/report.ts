@@ -1,7 +1,7 @@
 import { GPS_RADIUS_M, DEV_BYPASS_GPS } from './config';
 import { facilityById, haversineM, formatDist, Cleanliness } from './data';
 import { LatLng } from './bridge';
-import { showRewardedAd, maybeShowReportInterstitial } from './ads';
+import { showReportInterstitial } from './ads';
 import { saveReport, reportedToday, rewardsRemainingToday } from './points';
 import { toast, svgShower, svgWc, svgStar, svgPinLoc, CLEAN_LABEL, CLEAN_CLASS } from './ui';
 import { refreshAfterReport } from './map';
@@ -160,10 +160,8 @@ async function submit(): Promise<void> {
   const facId = currentFacId;
 
   try {
-    // 제보 시 전면형 (N회마다 1회). 보상과 무관하므로 실패해도 흐름을 막지 않는다.
-    await maybeShowReportInterstitial();
-    // 광고 시청 완료가 보상 지급 조건 (기획안 §3 — 광고 완료 콜백에서 지급)
-    const watched = await showRewardedAd();
+    // 제보 시에는 전면형만 노출한다. 보상형은 포인트 탭의 '전환'에서만 (justin 확정 2026-07-26).
+    await showReportInterstitial();
     const report = saveReport(
       {
         facilityId: facId,
@@ -172,15 +170,13 @@ async function submit(): Promise<void> {
         fee: draft.fee,
         ...(draft.hotWater !== null ? { hotWater: draft.hotWater } : {}),
       },
-      watched,
+      true,
     );
     closeReportSheet();
     if (report.reward > 0) {
-      toast(`제보 완료! 토스포인트 ${report.reward.toLocaleString()}원이 지급됐어요`);
-    } else if (watched) {
-      toast('제보 완료! 오늘 보상 횟수를 모두 사용했어요');
+      toast(`제보 완료! ${report.reward.toLocaleString()}포인트가 적립됐어요`);
     } else {
-      toast('제보가 저장됐어요 (광고 시청을 완료하면 포인트를 드려요)');
+      toast('제보 완료! 오늘 적립 횟수를 모두 사용했어요');
     }
     refreshAfterReport();
     renderPointsView();

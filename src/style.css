@@ -182,6 +182,12 @@ button { font: inherit; border: 0; background: none; cursor: pointer; color: inh
 .pc-stat .k { font-size: 11px; opacity: 0.85; }
 .pc-stat .v { font-size: 14.5px; font-weight: 800; margin-top: 2px; }
 .pc-sep { width: 1px; background: rgba(255,255,255,0.25); }
+.pc-cta {
+  margin-top: 12px; width: 100%; height: 48px; border-radius: 12px;
+  background: #fff; color: #1B7FC4; font-size: 15px; font-weight: 800;
+}
+.pc-cta:active { opacity: 0.85; }
+.pc-cta.off { background: rgba(255,255,255,0.25); color: rgba(255,255,255,0.75); font-weight: 600; }
 .hhead { margin: 22px 20px 0; font-size: 15px; font-weight: 800; }
 .hlist { margin: 10px 16px 0; background: #fff; border-radius: 16px; padding: 2px 16px; }
 .hrow { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid #F2F4F6; }
