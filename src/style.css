@@ -18,14 +18,6 @@ body {
 button { font: inherit; border: 0; background: none; cursor: pointer; color: inherit; }
 #app { height: 100dvh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
 
-/* ---------- app nav ---------- */
-.appnav {
-  height: 52px; flex: none; display: flex; align-items: center; gap: 8px;
-  padding: 0 16px; background: #fff; position: relative; z-index: 40;
-}
-.appnav .logo { width: 26px; height: 26px; }
-.appnav .title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
-
 /* ---------- views ---------- */
 .view { flex: 1; position: relative; overflow: hidden; }
 .pointsview { overflow-y: auto; padding-bottom: 190px; background: #F7F8FA; }
@@ -58,7 +50,11 @@ button { font: inherit; border: 0; background: none; cursor: pointer; color: inh
 }
 .fchip.on { background: #191F28; color: #fff; }
 .locfab {
-  position: absolute; right: 14px; bottom: calc(var(--banner-h) + var(--safe-b) + 172px); z-index: 20;
+  /* bottom은 JS(main.ts positionLocateButton)가 탭바의 실제 렌더 위치를 측정해 지정한다.
+     --banner-h 기반 계산값으로는 실기기에서 계속 어긋났다(2026-07-27) — 광고 실측 높이가
+     반영되는 시점과 어긋나면 탭바와 광고 배너 사이에 애매하게 낀다. 탭바 자체를 기준으로
+     삼으면 배너 높이가 얼마가 되든 항상 탭바 바로 위에 붙는다. */
+  position: absolute; right: 14px; bottom: 250px; z-index: 20;
   width: 40px; height: 40px; border-radius: 20px;
   background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.14); display: flex; align-items: center; justify-content: center;
 }

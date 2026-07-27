@@ -20,6 +20,21 @@ function moveTabIndicator(activeBtn: HTMLElement): void {
   indicator.style.transform = `translateX(${activeBtn.offsetLeft}px)`;
 }
 
+/**
+ * 위치 버튼(locfab)을 탭바 바로 위에 고정한다. --banner-h 기반 calc()로 계산했더니
+ * 실기기에서 광고 실측 높이가 반영되는 시점과 어긋나 탭바-배너 사이에 애매하게
+ * 끼는 문제가 있었다(2026-07-27). 탭바의 실제 렌더 위치를 직접 측정하면 광고
+ * 높이가 얼마로 바뀌든 항상 탭바 바로 위에 붙는다.
+ */
+function positionLocateButton(): void {
+  const locfab = document.getElementById('btn-locate');
+  const tabbar = document.getElementById('tabbar');
+  if (!locfab || !tabbar) return;
+  const gap = 16;
+  const bottomPx = window.innerHeight - tabbar.getBoundingClientRect().top + gap;
+  locfab.style.bottom = `${bottomPx}px`;
+}
+
 function switchTab(tab: Tab): void {
   document.getElementById('view-map')!.hidden = tab !== 'map';
   document.getElementById('view-points')!.hidden = tab !== 'points';
@@ -59,6 +74,14 @@ async function boot(): Promise<void> {
     });
     const active = document.querySelector<HTMLButtonElement>('#tabbar .tab.active');
     if (active) moveTabIndicator(active); // 초기 활성 탭(지도) 위치로 인디케이터 배치
+
+    positionLocateButton();
+    window.addEventListener('resize', positionLocateButton); // 화면 회전 등
+    const banner = document.getElementById('ad-banner');
+    if (banner) {
+      // 광고 실측 높이 반영으로 탭바 위치가 바뀔 때마다 위치 버튼도 다시 맞춘다.
+      new ResizeObserver(positionLocateButton).observe(banner);
+    }
   });
 
   await step('포인트 초기화', async () => {
