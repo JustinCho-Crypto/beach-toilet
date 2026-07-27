@@ -10,8 +10,8 @@
     "typecheck": "tsc --noEmit",
     "deploy": "bash scripts/deploy-pages.sh",
     "build:data": "node scripts/build-data.mjs",
-    "ait:test": "VITE_AIT_ENV=test ait build && mkdir -p release && cp beachtoilet.ait release/beachtoilet-test.ait",
-    "ait:live": "VITE_AIT_ENV=live ait build && mkdir -p release && cp beachtoilet.ait release/beachtoilet-live.ait",
+    "ait:test": "VITE_AIT_ENV=test BASE=/ ait build && mkdir -p release && cp beachtoilet.ait release/beachtoilet-test.ait",
+    "ait:live": "VITE_AIT_ENV=live BASE=/ ait build && mkdir -p release && cp beachtoilet.ait release/beachtoilet-live.ait",
     "ait:verify": "node scripts/verify-ait.mjs"
   },
   "dependencies": {

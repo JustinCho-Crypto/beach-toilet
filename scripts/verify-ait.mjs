@@ -40,6 +40,18 @@ for (const name of jsEntries) {
   haystack += decoder.decode(await reader.readEntry(name));
 }
 
+// 2026-07-27 실제 사고: vite.config.ts의 base 기본값이 GitHub Pages용 '/beach-toilet/'라,
+// BASE=/ 를 빼먹고 빌드하면 index.html의 <script>/<link> 경로가 존재하지 않는 서브패스를
+// 가리켜 실기기 웹뷰에서 JS/CSS가 통째로 404 — 화면에 스타일 안 먹은 정적 HTML만 남는다.
+// 겉보기 증상(로고만 큼직하게 뜸)이 다른 버그와 구분이 안 가서 여기서 기계적으로 잡는다.
+const htmlEntries = entries.filter((name) => name.endsWith('.html'));
+const badBasePaths = [];
+for (const name of htmlEntries) {
+  const html = decoder.decode(await reader.readEntry(name));
+  const srcs = [...html.matchAll(/(?:src|href)="(\/beach-toilet\/[^"]*)"/g)].map((m) => m[1]);
+  if (srcs.length > 0) badBasePaths.push({ file: name, srcs });
+}
+
 const found = {
   adTest: AD_TEST.filter((id) => haystack.includes(id)),
   adLive: AD_LIVE.filter((id) => haystack.includes(id)),
@@ -59,9 +71,16 @@ console.log(`  번들 파일 ${entries.length}개 (검사 대상 JS/HTML ${jsEnt
 console.log(`  광고 테스트 ID   ${found.adTest.length}/3`);
 console.log(`  광고 운영 ID     ${found.adLive.length}/3`);
 console.log(`  프로모션 TEST_   ${found.promoTest ? '있음' : '없음'}`);
-console.log(`  프로모션 실코드  ${found.promoLive ? '있음' : '없음'}\n`);
+console.log(`  프로모션 실코드  ${found.promoLive ? '있음' : '없음'}`);
+console.log(`  자산 경로        ${badBasePaths.length === 0 ? '정상 (루트 기준)' : '⚠ /beach-toilet/ 서브패스 발견'}\n`);
 
 const problems = [];
+if (badBasePaths.length > 0) {
+  problems.push(
+    `index.html이 GitHub Pages용 서브패스(/beach-toilet/)를 참조해요 — 실기기 웹뷰에서 JS/CSS가 404됩니다. ` +
+      `BASE=/ 환경변수 없이 빌드된 것으로 보여요 (예: ${badBasePaths[0].srcs[0]}).`,
+  );
+}
 if (isLive && isTest) problems.push('테스트 ID와 운영 ID가 한 아티팩트에 섞여 있어요.');
 if (!isLive && !isTest) problems.push('광고 ID도 프로모션 코드도 발견되지 않았어요 (번들 구조 변경 의심).');
 if (isLive && found.adLive.length !== 3) problems.push(`운영 빌드인데 운영 광고 ID가 ${found.adLive.length}/3개만 있어요.`);
