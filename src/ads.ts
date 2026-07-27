@@ -25,10 +25,15 @@ let bannerInitialized = false;
 
 function ensureBannerInitialized(): void {
   if (bannerInitialized) return;
-  if (isSupported(TossAds.initialize.isSupported)) {
-    TossAds.initialize({});
+  bannerInitialized = true; // 실패해도 재시도 폭주 방지 — 먼저 표시해둔다
+  try {
+    if (isSupported(TossAds.initialize.isSupported)) {
+      TossAds.initialize({});
+    }
+  } catch {
+    // 실기기에서 실제로 예외를 던진 사례가 있었다(2026-07-27) — 배너 광고 하나 때문에
+    // 앱 부팅 전체가 멈추면 안 되므로 여기서 삼킨다. 배너는 플레이스홀더로 폴백된다.
   }
-  bannerInitialized = true;
 }
 
 function mountBannerPlaceholder(el: HTMLElement): void {
