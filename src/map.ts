@@ -288,6 +288,7 @@ function renderKakaoOverlays(): void {
     const ov = new kakao.maps.CustomOverlay({
       position: new kakao.maps.LatLng(fac.lat, fac.lng),
       content: el, map: state.kakaoMap, yAnchor: 1, zIndex: 10,
+      clickable: true, // 필수 — 없으면 실기기 터치가 오버레이 클릭이 아니라 지도 팬 제스처로 먹힌다
     });
     state.kakaoOverlays.push(ov);
   }
@@ -296,6 +297,7 @@ function renderKakaoOverlays(): void {
     const ov = new kakao.maps.CustomOverlay({
       position: new kakao.maps.LatLng(spot.lat, spot.lng),
       content: el, map: state.kakaoMap, yAnchor: 1, zIndex: 20,
+      clickable: true, // 데스크톱 브라우저 클릭은 됐지만 실기기 터치는 이게 없으면 안 눌린다(실측)
     });
     state.kakaoOverlays.push(ov);
   }
