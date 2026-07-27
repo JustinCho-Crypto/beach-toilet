@@ -70,9 +70,23 @@ function visibleFacilities(): Facility[] {
 
 // ---------- 스팟 바텀시트 ----------
 
+/**
+ * 도보 소요 시간. 보행 속도 4km/h(≈67m/분) 기준의 대략치다.
+ * "1.2km"보다 "도보 18분"이 갈지 말지를 판단하기 쉬워서 함께 보여준다 —
+ * 물놀이 중에 왕복 30분짜리 화장실은 사실상 없는 것과 같다(justin 지적, 2026-07-27).
+ */
+function walkMin(meters: number): number {
+  return Math.max(1, Math.round(meters / 67));
+}
+
+/** 도보권 기준. 이 안쪽이면 '지금 다녀올 만한 거리'로 본다. */
+const WALKABLE_M = 500;
+
 function facilityRowHtml(fac: Facility, myPos: LatLng): string {
   const agg = aggregateFor(fac.id);
-  const dist = formatDist(haversineM(myPos.lat, myPos.lng, fac.lat, fac.lng));
+  const distM = haversineM(myPos.lat, myPos.lng, fac.lat, fac.lng);
+  const far = distM > WALKABLE_M;
+  const dist = `${formatDist(distM)}<span class="walkmin"> · 도보 ${walkMin(distM)}분</span>`;
   const icon = fac.type === 'shower' ? svgShower(20, '#1B9CF0') : svgWc(20, '#1B9CF0');
   let meta: string;
   if (agg.count === 0) {
@@ -89,7 +103,7 @@ function facilityRowHtml(fac: Facility, myPos: LatLng): string {
     if (agg.lastTs) parts.push(`제보 ${formatAgo(agg.lastTs)}`);
     meta = parts.join(' · ');
   }
-  return `<button type="button" class="frow" data-fac="${fac.id}">
+  return `<button type="button" class="frow${far ? ' far' : ''}" data-fac="${fac.id}">
     <div class="fic">${icon}</div>
     <div class="fbody"><div class="fname">${fac.name}</div><div class="fmeta">${meta}</div></div>
     <svg width="15" height="15" viewBox="0 0 24 24" class="fchev"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -130,10 +144,17 @@ export function openSpotSheet(spotId: string): void {
   state.selectedSpotId = spotId;
 
   const sheet = document.getElementById('spot-sheet')!;
-  const facs = facilitiesOf(spotId);
-  const toilets = facs.filter((f) => f.type === 'toilet').length;
-  const showers = facs.filter((f) => f.type === 'shower').length;
-  const aggs = facs.map((f) => aggregateFor(f.id)).filter((a) => a.count > 0);
+  // 생성 데이터는 '스팟 중심점' 기준 거리순인데 화면에 띄우는 거리는 '내 위치' 기준이라,
+  // 해변 한쪽 끝에 서 있으면 목록 순서와 실제 가까운 순서가 어긋났다(justin 지적, 2026-07-27).
+  // 화면에서 다시 내 위치 기준으로 정렬한다 — 여기가 유일하게 맞는 기준이다.
+  const facs = facilitiesOf(spotId)
+    .map((f) => ({ f, d: haversineM(state!.myPos.lat, state!.myPos.lng, f.lat, f.lng) }))
+    .sort((a, b) => a.d - b.d);
+  const near = facs.filter((x) => x.d <= WALKABLE_M);
+  const far = facs.filter((x) => x.d > WALKABLE_M);
+  const toilets = facs.filter((x) => x.f.type === 'toilet').length;
+  const showers = facs.filter((x) => x.f.type === 'shower').length;
+  const aggs = facs.map((x) => aggregateFor(x.f.id)).filter((a) => a.count > 0);
   const avg = aggs.length
     ? (aggs.reduce((s, a) => s + a.avgStars, 0) / aggs.length).toFixed(1)
     : '-';
@@ -156,9 +177,23 @@ export function openSpotSheet(spotId: string): void {
       <div class="stat"><div class="v"><span class="staric">${svgStar(13, '#FFB331')}</span> ${avg}</div><div class="k">평균 별점</div></div>
     </div>
     ${spot.showerNote ? `<div class="shnote">${svgShower(15, '#1B9CF0')}<span>${spot.showerNote}</span></div>` : ''}
-    <div class="frows">${facs.map((f) => facilityRowHtml(f, state!.myPos)).join('')}</div>
+    ${near.length === 0
+      ? `<div class="nonear">도보권(${WALKABLE_M}m 이내)에 등록된 곳이 없어요</div>`
+      : `<div class="frows">${near.map((x) => facilityRowHtml(x.f, state!.myPos)).join('')}</div>`}
+    ${far.length > 0 ? `
+      <button type="button" class="farmore" id="btn-farmore">멀리 있는 곳 ${far.length}개 더 보기</button>
+      <div class="frows" id="far-rows" hidden>${far.map((x) => facilityRowHtml(x.f, state!.myPos)).join('')}</div>
+    ` : ''}
   `;
   sheet.hidden = false;
+
+  // 도보권 밖은 기본적으로 접어둔다 — 목록 맨 위가 항상 '지금 갈 만한 곳'이 되도록.
+  const farBtn = sheet.querySelector<HTMLButtonElement>('#btn-farmore');
+  farBtn?.addEventListener('click', () => {
+    const rows = sheet.querySelector<HTMLElement>('#far-rows');
+    if (rows) rows.hidden = false;
+    farBtn.hidden = true;
+  });
 
   sheet.querySelectorAll<HTMLButtonElement>('.frow').forEach((b) => {
     b.addEventListener('click', () => openReportSheet(b.dataset.fac!, state!.myPos));
