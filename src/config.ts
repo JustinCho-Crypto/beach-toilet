@@ -5,9 +5,13 @@
 // M3(운영 전환) 시점엔 아래 플레이스홀더 상수 자체를 실키로 교체 (ait-factory 컨벤션 — config.ts에만 값 집중).
 // 필수: 카카오 개발자 콘솔 → 내 애플리케이션 → 플랫폼 → Web 플랫폼에 아래 도메인 등록
 //   - http://localhost:5199 (로컬 개발)
-//   - https://beach-toilet.apps.tossmini.com (실 서비스)
-//   - https://beach-toilet.private-apps.tossmini.com (테스트)
-// (도메인 미등록이 토스 웹뷰 무한 로딩의 추정 원인 — techchat 스레드 3859). 실패 시 네이버지도 폴백 검토.
+//   - https://beachtoilet.apps.tossmini.com (실 서비스)
+//   - https://beachtoilet.private-apps.tossmini.com (테스트/QR — 앱인토스 공식 문서 확인된 패턴)
+// ⚠️ 하이픈 없는 'beachtoilet'이다 (granite.config.ts의 appName·mTLS 인증서 CN과 동일).
+// 예전엔 저장소 이름을 따라 'beach-toilet'(하이픈)으로 잘못 안내돼 있었다 — 이 문서의
+// 이전 버전을 보고 그대로 등록했다면 카카오맵이 도메인 불일치로 목업 지도에 계속 머문다.
+// (도메인 미등록/불일치가 토스 웹뷰 무한 로딩·목업 폴백의 추정 원인 — techchat 스레드 3859).
+// 실패 시 네이버지도 폴백 검토.
 export const KAKAO_JS_KEY: string = (import.meta.env.VITE_KAKAO_JS_KEY as string | undefined) || '__REPLACE_KAKAO_JS_KEY__';
 
 // Supabase 프로젝트 (제보 공유 백엔드). supabase/schema.sql을 SQL Editor에서 먼저 실행할 것.

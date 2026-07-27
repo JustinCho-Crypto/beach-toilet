@@ -1,3 +1,13 @@
+:root {
+  /* 실기기 하단 안전영역(홈 인디케이터 등). CSS만으로 처리 — JS SafeAreaInsets 브릿지는
+     실기기에서 예기치 않게 예외를 던진 전례가 있어(ads.ts 참고) 굳이 쓰지 않는다. */
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  /* 배너 광고 실제 렌더 높이. 플레이스홀더 기본값 78px, 실광고 부착 시 ads.ts가
+     ResizeObserver로 실측해 갱신한다. 하단에 쌓이는 모든 UI(지도 위치 버튼, 플로팅
+     탭, 바텀시트, 토스트)는 이 값 + --safe-b를 기준으로 오프셋을 잡아야
+     실기기에서 배너 높이가 달라져도 서로 겹치거나 뜨지 않는다(땡모반 지도 패턴 승계). */
+  --banner-h: 78px;
+}
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 [hidden] { display: none !important; }
 html, body { height: 100%; }
@@ -44,10 +54,12 @@ button { font: inherit; border: 0; background: none; cursor: pointer; color: inh
   flex: none; height: 34px; padding: 0 14px; border-radius: 17px;
   font-size: 13px; font-weight: 700; background: #fff; color: #4E5968;
   box-shadow: 0 1px 5px rgba(0,0,0,0.10); white-space: nowrap;
+  transition: background 0.18s, color 0.18s;
 }
 .fchip.on { background: #191F28; color: #fff; }
 .locfab {
-  position: absolute; right: 14px; bottom: 250px; z-index: 20; width: 40px; height: 40px; border-radius: 20px;
+  position: absolute; right: 14px; bottom: calc(var(--banner-h) + var(--safe-b) + 172px); z-index: 20;
+  width: 40px; height: 40px; border-radius: 20px;
   background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.14); display: flex; align-items: center; justify-content: center;
 }
 .mydot {
@@ -88,7 +100,7 @@ button { font: inherit; border: 0; background: none; cursor: pointer; color: inh
 
 /* ---------- bottom sheet (스팟 상세) ---------- */
 .sheet {
-  position: absolute; left: 0; right: 0; bottom: 78px; z-index: 44;
+  position: absolute; left: 0; right: 0; bottom: calc(var(--banner-h) + var(--safe-b)); z-index: 44;
   background: #fff; border-radius: 22px 22px 0 0; box-shadow: 0 -6px 24px rgba(0,0,0,0.10);
   padding: 10px 20px 16px; max-height: 62%; overflow-y: auto;
 }
@@ -145,6 +157,7 @@ button { font: inherit; border: 0; background: none; cursor: pointer; color: inh
   flex: 1; height: 46px; border-radius: 12px; background: #F7F8FA; border: 2px solid transparent;
   display: flex; align-items: center; justify-content: center; gap: 6px;
   font-size: 13.5px; font-weight: 600; color: #8B95A1; white-space: nowrap;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
 }
 .seg.on { background: #EAF6FE; border-color: #1B9CF0; color: #1B9CF0; font-weight: 700; }
 .fgrid { display: flex; gap: 14px; margin-top: 20px; }
@@ -211,22 +224,43 @@ button { font: inherit; border: 0; background: none; cursor: pointer; color: inh
 
 /* ---------- floating tabs ---------- */
 .tabbar {
-  position: absolute; left: 50%; transform: translateX(-50%); bottom: 92px; z-index: 50;
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--banner-h) + var(--safe-b) + 14px); z-index: 50;
   display: flex; background: #191F28; border-radius: 26px; padding: 5px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.22);
 }
+/* 활성 배경은 버튼이 아니라 슬라이딩 인디케이터가 담당 — 토글이 스윽 미끄러진다
+   (땡모반 지도 패턴 승계). 버튼 자체는 색상만 전환해 겹침 없이 얹힌다. */
+.tab-indicator {
+  position: absolute; top: 5px; bottom: 5px; left: 0; width: 0;
+  background: #fff; border-radius: 21px; z-index: 0;
+  transform-origin: left center; will-change: transform;
+  transition: transform 0.26s cubic-bezier(0.22, 0.8, 0.3, 1); /* transform만 — 레이아웃 리플로우 없음 */
+}
 .tabbar .tab {
+  position: relative; z-index: 1;
   display: flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 21px;
   font-size: 14px; font-weight: 600; color: #9AA3AE;
+  transition: color 0.2s;
 }
-.tabbar .tab.active { background: #fff; color: #191F28; }
+.tabbar .tab.active { color: #191F28; }
 
 /* ---------- ad banner ---------- */
 .adbanner {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 78px; z-index: 45;
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 45;
+  height: calc(var(--banner-h) + var(--safe-b));
   background: #F9FAFB; border-top: 1px solid #EEF0F2;
-  display: flex; align-items: center; gap: 12px; padding: 0 16px;
+  display: flex; align-items: center; gap: 12px; padding: 0 16px var(--safe-b);
 }
+/* 실광고 모드: 컨테이너 높이를 광고 크리에이티브 실측값에 맞춘다(ads.ts가 동기화).
+   safe-b padding을 여기 걸지 않는다 — 광고 SDK 배경 레이어가 #ad-banner 자체를
+   inset:0으로 채우는 방식이라, 패딩을 주면 그 영역까지 광고 배경이 새어들어가
+   죽은 여백처럼 보인다. 안전영역은 이미 --banner-h 계산에서 보정한다(ads.ts 주석 참고). */
+.adbanner.adbanner-live { background: #fff; padding: 0; border-top: 0; display: block; height: auto; }
+/* TossAds SDK가 만드는 배너 래퍼는 inline height:100%를 박는데, 부모가 height:auto인
+   상태에서 의도보다 크게 해석돼 광고 카드 위아래에 여백이 생긴다. 래퍼만 auto로 강제. */
+#ad-banner > [data-toss-ads-attach-banner-wrapper] { height: auto !important; }
+.adbanner.adbanner-collapsed { display: none; }
 .adbanner .ad-thumb {
   width: 46px; height: 46px; border-radius: 10px; background: #E5E8EB;
   display: flex; align-items: center; justify-content: center; font-size: 11px; color: #8B95A1; font-weight: 700;
@@ -252,7 +286,8 @@ button { font: inherit; border: 0; background: none; cursor: pointer; color: inh
 
 /* ---------- toast ---------- */
 .toast {
-  position: absolute; left: 50%; transform: translateX(-50%); bottom: 170px; z-index: 95;
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--banner-h) + var(--safe-b) + 92px); z-index: 95;
   background: rgba(25,31,40,0.9); color: #fff; font-size: 13px; font-weight: 600;
   border-radius: 12px; padding: 10px 16px; white-space: nowrap;
 }

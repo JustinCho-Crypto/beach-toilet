@@ -21,21 +21,75 @@ function isSupported(check?: () => boolean): boolean {
   }
 }
 
-let bannerInitialized = false;
-
-function ensureBannerInitialized(): void {
-  if (bannerInitialized) return;
-  bannerInitialized = true; // 실패해도 재시도 폭주 방지 — 먼저 표시해둔다
+/**
+ * 배너 광고. 반드시 TossAds.initialize()의 onInitialized 콜백 안에서만 attachBanner를
+ * 호출한다 — 초기화 완료 전에 부착을 시도하면 조용히 아무것도 안 뜨는 게 실기기 실측
+ * 결과였다(2026-07-27). isSupported() 게이트도 attachBanner가 아니라 initialize
+ * 쪽으로 건다 — attachBanner.isSupported()는 초기화 이전엔 신뢰할 수 없다.
+ * (땡모반 지도 ads.ts 패턴 그대로 승계 — 실기기에서 검증된 유일한 순서.)
+ */
+export function mountBanner(el: HTMLElement): void {
+  if (!isSupported(TossAds.initialize.isSupported)) {
+    mountBannerPlaceholder(el);
+    return;
+  }
   try {
-    if (isSupported(TossAds.initialize.isSupported)) {
-      TossAds.initialize({});
-    }
-  } catch {
-    // 실기기에서 실제로 예외를 던진 사례가 있었다(2026-07-27) — 배너 광고 하나 때문에
-    // 앱 부팅 전체가 멈추면 안 되므로 여기서 삼킨다. 배너는 플레이스홀더로 폴백된다.
+    TossAds.initialize({
+      callbacks: {
+        onInitialized: () => attachBanner(el),
+        onInitializationFailed: (error) => {
+          console.warn('[ads] TossAds 초기화 실패', error);
+          collapseBanner(el);
+        },
+      },
+    });
+  } catch (e) {
+    console.warn('[ads] TossAds 초기화 예외', e);
+    mountBannerPlaceholder(el);
   }
 }
 
+function attachBanner(el: HTMLElement): void {
+  el.innerHTML = '';
+  el.classList.add('adbanner-live');
+
+  // --banner-h 계약: 다른 하단 UI(위치 버튼·플로팅 탭·바텀시트·토스트)가
+  // calc(banner-h + safe-b)로 오프셋을 잡으므로, 이 값은 항상 "실제 배너 박스 높이"와
+  // 같아야 한다. 실광고 모드는 padding을 두지 않아(위 CSS 주석 참고) 렌더 높이에
+  // safe-b가 안 섞이는데, 소비자 쪽 공식은 여전히 +safe-b를 더하니 저장 전에 미리 뺀다.
+  const syncHeight = () => {
+    const rectH = Math.ceil(el.getBoundingClientRect().height);
+    const h = Math.max(0, rectH - getSafeBottomPx());
+    if (h > 20) document.documentElement.style.setProperty('--banner-h', `${h}px`);
+  };
+  new ResizeObserver(syncHeight).observe(el);
+
+  try {
+    TossAds.attachBanner(AD_GROUP.banner, el, {
+      theme: 'auto',
+      variant: 'expanded',
+      callbacks: {
+        onNoFill: () => collapseBanner(el),
+        onAdFailedToRender: (payload) => {
+          console.warn('[ads] 배너 렌더 실패', payload);
+          collapseBanner(el);
+        },
+      },
+    });
+  } catch (e) {
+    console.warn('[ads] 배너 부착 예외', e);
+    collapseBanner(el);
+  }
+}
+
+/** 광고가 없을 때 빈 회색 띠를 남기지 않도록 배너 영역을 접는다 */
+function collapseBanner(el: HTMLElement): void {
+  el.innerHTML = '';
+  el.classList.add('adbanner-collapsed');
+  document.documentElement.style.setProperty('--banner-h', '0px');
+}
+
+/** 토스 웹뷰 밖(로컬 개발 등)에서 지면 위치를 확인하기 위한 표시 */
 function mountBannerPlaceholder(el: HTMLElement): void {
   el.innerHTML = `
     <div class="ad-thumb">AD</div>
@@ -46,23 +100,15 @@ function mountBannerPlaceholder(el: HTMLElement): void {
     <div class="ad-mark">광고</div>`;
 }
 
-export function mountBanner(el: HTMLElement): void {
-  if (!isSupported(TossAds.attachBanner.isSupported)) {
-    mountBannerPlaceholder(el);
-    return;
-  }
-  ensureBannerInitialized();
-  try {
-    TossAds.attachBanner(AD_GROUP.banner, el, {
-      theme: 'auto',
-      callbacks: {
-        onNoFill: () => mountBannerPlaceholder(el),
-        onAdFailedToRender: () => mountBannerPlaceholder(el),
-      },
-    });
-  } catch {
-    mountBannerPlaceholder(el);
-  }
+/** style.css --safe-b(env(safe-area-inset-bottom))와 동일한 값을 px로 읽어온다 */
+function getSafeBottomPx(): number {
+  const probe = document.createElement('div');
+  probe.style.cssText =
+    'position:fixed;bottom:0;left:0;height:0;padding-bottom:env(safe-area-inset-bottom, 0px);visibility:hidden;pointer-events:none;';
+  document.body.appendChild(probe);
+  const px = probe.getBoundingClientRect().height;
+  probe.remove();
+  return px;
 }
 
 function showFullScreenPlaceholder(

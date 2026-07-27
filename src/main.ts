@@ -8,11 +8,25 @@ import { toast } from './ui';
 
 type Tab = 'map' | 'points';
 
+/**
+ * 활성 배경을 버튼마다 즉시 켜고 끄는 대신, 인디케이터 하나를 transform으로 슬라이드시킨다
+ * (땡모반 지도 패턴 승계) — 레이아웃 리플로우 없이 GPU 합성만으로 움직여서 실기기에서도
+ * 버벅이지 않는다. 버튼 쪽은 색상만 바뀌므로 CSS transition으로 충분히 부드럽다.
+ */
+function moveTabIndicator(activeBtn: HTMLElement): void {
+  const indicator = document.getElementById('tab-indicator');
+  if (!indicator) return;
+  indicator.style.width = `${activeBtn.offsetWidth}px`;
+  indicator.style.transform = `translateX(${activeBtn.offsetLeft}px)`;
+}
+
 function switchTab(tab: Tab): void {
   document.getElementById('view-map')!.hidden = tab !== 'map';
   document.getElementById('view-points')!.hidden = tab !== 'points';
   document.querySelectorAll<HTMLButtonElement>('#tabbar .tab').forEach((b) => {
-    b.classList.toggle('active', b.dataset.tab === tab);
+    const active = b.dataset.tab === tab;
+    b.classList.toggle('active', active);
+    if (active) moveTabIndicator(b);
   });
   if (tab === 'points') {
     closeSheet();
@@ -39,9 +53,12 @@ async function boot(): Promise<void> {
   await step('배너 광고', () => mountBanner(document.getElementById('ad-banner')!));
 
   await step('탭 전환 바인딩', () => {
-    document.querySelectorAll<HTMLButtonElement>('#tabbar .tab').forEach((b) => {
+    const tabs = document.querySelectorAll<HTMLButtonElement>('#tabbar .tab');
+    tabs.forEach((b) => {
       b.addEventListener('click', () => switchTab(b.dataset.tab as Tab));
     });
+    const active = document.querySelector<HTMLButtonElement>('#tabbar .tab.active');
+    if (active) moveTabIndicator(active); // 초기 활성 탭(지도) 위치로 인디케이터 배치
   });
 
   await step('포인트 초기화', async () => {
