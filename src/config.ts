@@ -10,6 +10,15 @@
 // (도메인 미등록이 토스 웹뷰 무한 로딩의 추정 원인 — techchat 스레드 3859). 실패 시 네이버지도 폴백 검토.
 export const KAKAO_JS_KEY: string = (import.meta.env.VITE_KAKAO_JS_KEY as string | undefined) || '__REPLACE_KAKAO_JS_KEY__';
 
+// Supabase 프로젝트 (제보 공유 백엔드). supabase/schema.sql을 SQL Editor에서 먼저 실행할 것.
+// 콘솔 → Project Settings → API에서 Project URL / anon public key를 그대로 넣는다.
+// URL은 createClient()가 형식을 검증해 잘못되면 즉시 예외를 던지므로, 플레이스홀더도
+// 유효한 URL 모양을 유지한다(값 자체는 존재하지 않는 호스트라 호출은 안전하게 실패한다).
+export const SUPABASE_URL: string =
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined) || 'https://__REPLACE_ME__.supabase.co';
+export const SUPABASE_ANON_KEY: string =
+  (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) || '__REPLACE_SUPABASE_ANON_KEY__';
+
 // ---------- 빌드 대상 환경 (test / live) ----------
 //
 // ⚠️ 런타임으로 테스트/운영을 구분할 수 없다. QR 테스트도 '실제 토스 앱'에서 돌기 때문에

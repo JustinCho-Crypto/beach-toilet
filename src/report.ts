@@ -162,7 +162,7 @@ async function submit(): Promise<void> {
   try {
     // 제보 시에는 전면형만 노출한다. 보상형은 포인트 탭의 '전환'에서만 (justin 확정 2026-07-26).
     await showReportInterstitial();
-    const report = saveReport(
+    const report = await saveReport(
       {
         facilityId: facId,
         stars: draft.stars,

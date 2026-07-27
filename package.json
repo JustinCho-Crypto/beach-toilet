@@ -15,7 +15,8 @@
     "ait:verify": "node scripts/verify-ait.mjs"
   },
   "dependencies": {
-    "@apps-in-toss/web-framework": "2.10.7"
+    "@apps-in-toss/web-framework": "2.10.7",
+    "@supabase/supabase-js": "^2.45.4"
   },
   "devDependencies": {
     "typescript": "^5.5.4",

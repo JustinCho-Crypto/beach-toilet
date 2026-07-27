@@ -58,10 +58,27 @@
 
 - Vite + TypeScript, 프레임워크 없음.
 - 화면 전부: **탭 2개(지도 / 포인트, 하단 플로팅 알약)** + 스팟 바텀시트 + 제보 시트.
-- `src/config.ts` — 운영 전환 시 교체할 값을 여기에만 둔다 (카카오 JS 키, 광고 지면 ID, 보상 확률표, 일일 한도, GPS 반경, `DEV_BYPASS_GPS`).
-- `src/bridge.ts`(위치·저장소) / `src/ads.ts`(광고) — 네이티브 의존 격리. M3 교체 지점.
+- `src/config.ts` — 운영 전환 시 교체할 값을 여기에만 둔다 (카카오 JS 키, Supabase URL/키, 광고 지면 ID, 프로모션 코드, 보상 확률표, 일일 한도, GPS 반경).
+- `src/bridge.ts`(위치·저장소) / `src/ads.ts`(광고) — 네이티브 의존 격리.
+- `src/reportsApi.ts` — Supabase 클라이언트. 스키마는 `supabase/schema.sql`.
 - `src/data.generated.ts` — 배치 산출물(커밋됨). `src/data.ts`는 타입·헬퍼만 두고 재수출.
 - **카카오맵 SDK 로드 실패 시 목업 지도로 자동 폴백** → 키 없이도 개발 가능.
+
+### 제보 저장 — 두 원장이 분리돼 있다 (2026-07-27)
+
+- **포인트 원장**(적립·전환·일일 한도)은 기기 로컬(공식 `Storage`)만 본다. 로그인이 없는 앱이라 "1인 1일 n회" 어뷰징 방어는 애초에 기기 단위 이상으로 강제할 수 없다 (§3-3).
+- **제보 내용**(별점·청결·요금 등)은 `src/reportsApi.ts`를 통해 Supabase에도 올라가 **다른 유저에게 보인다.** 이게 없으면 "남이 남긴 최신 정보를 본다"는 이 앱의 핵심 가치가 실제로는 작동하지 않는다 — 실제로 이 문제를 놓쳤다가 justin이 지적해서 뒤늦게 붙인 것 (`points.ts` 상단 주석 참고).
+- `aggregateFor()`는 지도 렌더링 경로 곳곳(`map.ts`)에서 **동기 호출**된다. 그래서 Supabase 조회를 동기 함수 안에서 하지 않고, `initPoints()` → `syncReports()`가 부팅 시 한 번 전체를 가져와 메모리 캐시(`remoteReports`)에 채워두고, `aggregateFor()`는 그 캐시만 읽는다. **이 패턴을 깨지 말 것** — `aggregateFor`를 async로 바꾸면 `map.ts`의 모든 렌더 함수가 연쇄적으로 async가 돼야 한다.
+- 서버 동기화 실패(오프라인, Supabase 키 미설정 등) 시 `remoteSynced=false`로 남아 **이 기기의 로컬 제보만** 보여주는 폴백으로 자동 전환된다 — 빈 화면보다는 낫다는 판단.
+- 새 제보 제출 성공 시 전체 재조회 없이 `remoteReports`에 바로 이어붙인다(낙관적 갱신). 실패해도 로컬 저장은 이미 끝나 있어 그 기기 사용자 경험은 막히지 않지만, **재전송 큐는 없다** — 오프라인 중 제출한 제보는 유실된다.
+
+### Supabase 설정 (최초 1회)
+
+1. supabase.com에서 프로젝트 생성 (무료 티어로 충분).
+2. SQL Editor에서 `supabase/schema.sql` 실행.
+3. Project Settings → API에서 Project URL / anon public key 확인.
+4. 로컬 개발: `.env.local`에 `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` 설정 (`.env.example` 참고).
+5. 앱인토스 빌드: `ait build`도 같은 vite 빌드를 거치므로 동일 env가 필요 — `.env.local` 또는 빌드 환경에 심어둘 것.
 
 ### 명령
 
@@ -185,7 +202,7 @@
 
 ## 5. 다음 할 일
 
-1. **제보 서버 연동** — 현재 제보가 기기 로컬(공식 `Storage`)에만 쌓여 **유저 간 공유가 안 된다**. "남이 올린 정보를 본다"는 코어 루프가 실제로는 작동하지 않는 상태. 출시 관점에서 가장 급한 항목.
+1. **Supabase 프로젝트 발급 대기** — 코드는 연동 완료(`src/reportsApi.ts`, `supabase/schema.sql`)됐지만 실제 프로젝트 URL/anon key가 아직 없다. justin이 발급 후 `.env.local`에 채우면 바로 실동작 확인.
 2. **콘솔 프로모션 테스트 통과** — `npm run ait:test` 아티팩트를 올려 QR로 실행 → 포인트 전환 1회 성공 → 콘솔에서 '시작하기' 활성화. 이걸 통과해야 실지급이 열린다.
 3. **역마진 검증** — 지급 EV≈103원 vs 보상형 광고 회당 실수익. 금송아지 실측 eCPM(한계값 기준, 평시 5원)으로 대조. 역마진이면 확률표를 조정한다.
 4. **샤워장 시딩 계속** (§4-2) — 이용객 상위권부터. 현재 44건(좌표 5 + 안내문구 39).

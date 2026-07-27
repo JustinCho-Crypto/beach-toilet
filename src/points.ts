@@ -1,10 +1,18 @@
 import { grantPromotionReward } from '@apps-in-toss/web-framework';
 import { REWARD_TABLE, REWARD_DAILY_LIMIT, PROMOTION_CODE } from './config';
 import { storageGet, storageSet, hydrateStorage } from './bridge';
+import { fetchAllReports, submitReport } from './reportsApi';
 import { Cleanliness } from './data';
 
-// 제보 저장 + 토스포인트 보상 로직.
-// 실제 포인트 지급은 M3에서 앱인토스 프로모션/지급 API와 연동 — 여기서는 로컬 원장만 관리.
+// 제보 저장(공유) + 토스포인트 보상(기기별) 로직.
+//
+// 두 원장은 성격이 달라 분리돼 있다:
+//   - 포인트 원장(적립/전환/일일 한도)은 기기 로컬(공식 Storage)만 본다.
+//     로그인이 없는 앱이라 "1인 1일 n회" 같은 어뷰징 방어는 애초에 기기 단위 이상으로
+//     강제할 수 없다(CLAUDE.md §3-3에 남긴 알려진 한계).
+//   - 제보 내용(별점·청결·요금 등)은 Supabase(supabase/schema.sql)에도 올라가
+//     다른 유저에게 보인다. 이게 없으면 "남이 남긴 최신 정보를 본다"는 이 앱의
+//     핵심 가치가 실제로는 작동하지 않는다.
 
 export interface Report {
   facilityId: string;
@@ -20,10 +28,55 @@ export interface Report {
 const REPORTS_KEY = 'bt.reports';
 const DAILY_KEY = 'bt.rewardDaily'; // { date: 'YYYY-MM-DD', count: number }
 const CONVERTED_KEY = 'bt.converted'; // 지금까지 토스포인트로 전환한 누적 금액
+const DEVICE_ID_KEY = 'bt.deviceId';
 
-/** 앱 부팅 시 1회 호출: 공식 Storage에서 제보/포인트 원장을 읽어온다. */
-export function initPoints(): Promise<void> {
-  return hydrateStorage([REPORTS_KEY, DAILY_KEY, CONVERTED_KEY]);
+/** 집계(aggregateFor)에 필요한 최소 형태. 로컬 Report와 서버 RemoteReportRow를 여기로 맞춘다. */
+interface AggEntry {
+  facilityId: string;
+  stars: number;
+  clean: Cleanliness;
+  fee: 'free' | 'paid';
+  hotWater?: boolean;
+  ts: number;
+}
+
+// 서버에서 가져온 전체 제보(다른 유저 포함) 캐시. aggregateFor가 지도 렌더링 경로 곳곳에서
+// 동기 호출되기 때문에(map.ts), 네트워크 호출은 syncReports()로 미리 끝내 두고
+// aggregateFor 자체는 계속 동기 함수로 남긴다.
+let remoteReports: AggEntry[] = [];
+let remoteSynced = false;
+
+/** 부팅 시 1회: 서버에서 전체 제보를 가져와 캐시를 채운다. 실패하면 이 기기 제보만 보인다. */
+export async function syncReports(): Promise<void> {
+  try {
+    const rows = await fetchAllReports();
+    remoteReports = rows.map((r) => ({
+      facilityId: r.facility_id,
+      stars: r.stars,
+      clean: r.clean,
+      fee: r.fee,
+      hotWater: r.hot_water ?? undefined,
+      ts: new Date(r.created_at).getTime(),
+    }));
+    remoteSynced = true;
+  } catch (e) {
+    console.error('[reports] 서버 동기화 실패 — 이 기기의 제보만 표시해요', e);
+  }
+}
+
+function getDeviceId(): string {
+  let id = storageGet<string | null>(DEVICE_ID_KEY, null);
+  if (!id) {
+    id = crypto.randomUUID();
+    storageSet(DEVICE_ID_KEY, id);
+  }
+  return id;
+}
+
+/** 앱 부팅 시 1회 호출: 공식 Storage에서 포인트 원장을 읽고, 서버에서 제보를 동기화한다. */
+export async function initPoints(): Promise<void> {
+  await hydrateStorage([REPORTS_KEY, DAILY_KEY, CONVERTED_KEY, DEVICE_ID_KEY]);
+  await syncReports();
 }
 
 function today(): string {
@@ -66,8 +119,14 @@ export function drawReward(): number {
   return REWARD_TABLE[0].amount;
 }
 
-/** 제보를 저장하고, 일일 한도 내면 보상 금액을 반환한다 (한도 초과 시 0). */
-export function saveReport(input: Omit<Report, 'ts' | 'reward'>, rewardEligible: boolean): Report {
+/**
+ * 제보를 저장하고, 일일 한도 내면 보상 금액을 반환한다 (한도 초과 시 0).
+ * 포인트 적립(로컬)은 서버 제출 성공 여부와 무관하게 항상 확정된다 — 유저가 실제로
+ * 제보 행위(+ 광고 시청)를 완료했다는 사실은 네트워크 상태와 별개이기 때문이다.
+ * 서버 제출이 실패해도 이 기기에서는 정상적으로 보이고, 다음 syncReports()에서
+ * 다른 기기 제보가 채워진다 — 다만 이번 제보 자체는 재전송되지 않는다(재시도 큐는 미구현).
+ */
+export async function saveReport(input: Omit<Report, 'ts' | 'reward'>, rewardEligible: boolean): Promise<Report> {
   let reward = 0;
   if (rewardEligible && rewardsRemainingToday() > 0) {
     reward = drawReward();
@@ -77,6 +136,30 @@ export function saveReport(input: Omit<Report, 'ts' | 'reward'>, rewardEligible:
   const all = getReports();
   all.unshift(report);
   storageSet(REPORTS_KEY, all);
+
+  try {
+    await submitReport({
+      facilityId: input.facilityId,
+      stars: input.stars,
+      clean: input.clean,
+      fee: input.fee,
+      hotWater: input.hotWater,
+      deviceId: getDeviceId(),
+    });
+    // 서버 확정 즉시 캐시에 반영 — 다음 전체 재동기화를 기다리지 않고 바로 지도에 보이게 한다.
+    remoteReports.unshift({
+      facilityId: input.facilityId,
+      stars: input.stars,
+      clean: input.clean,
+      fee: input.fee,
+      hotWater: input.hotWater,
+      ts: report.ts,
+    });
+    remoteSynced = true;
+  } catch (e) {
+    console.error('[reports] 서버 제출 실패 — 이 제보는 이 기기에서만 보여요', e);
+  }
+
   return report;
 }
 
@@ -145,7 +228,9 @@ export interface FacilityAgg {
 }
 
 export function aggregateFor(facilityId: string): FacilityAgg {
-  const reports = getReports().filter((r) => r.facilityId === facilityId);
+  // 서버 동기화 전/실패 시엔 이 기기 제보만 폴백으로 보여준다(빈 화면보다 낫다).
+  const source: AggEntry[] = remoteSynced ? remoteReports : getReports();
+  const reports = source.filter((r) => r.facilityId === facilityId);
   if (reports.length === 0) {
     return { count: 0, avgStars: 0, clean: null, fee: null, hotWater: null, lastTs: null };
   }
