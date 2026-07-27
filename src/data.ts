@@ -1,11 +1,11 @@
-// 스팟(해수욕장/계곡)·시설(화장실/샤워실) 타입 정의.
+// 스팟(해수욕장)·시설(화장실/샤워실) 타입 정의.
 //
 // 실제 데이터는 `npm run build:data`가 생성하는 data.generated.ts에서 온다:
 //   스팟/샤워장/화장실 POI — 카카오 로컬 API 검색
 //   화장실 — 전국공중화장실표준데이터(15012892, 2025.2부터 좌표 미제공 → 주소 지오코딩)
 // 생성 파일은 저장소에 커밋되므로 클론 직후에도 빌드된다.
 
-export type SpotType = 'beach' | 'valley';
+export type SpotType = 'beach';
 export type FacilityType = 'toilet' | 'shower';
 export type Cleanliness = 'clean' | 'normal' | 'dirty';
 
@@ -18,7 +18,7 @@ export interface Spot {
   lng: number;
   /**
    * 해수욕장 개장 기간 (M.D 형식). 출처는 해양수산부 2024년 개폐장일정이라
-   * 연도별로 며칠씩 달라질 수 있어 '대략의 시즌'으로 다룬다. 계곡은 없음.
+   * 연도별로 며칠씩 달라질 수 있어 '대략의 시즌'으로 다룬다.
    */
   openStart?: string;
   openEnd?: string;
@@ -26,8 +26,6 @@ export interface Spot {
   notOpening?: boolean;
   /**
    * 이용객 순위 등 한 줄 참고.
-   * (계곡 위험등급은 도입 보류 — 행안부 물놀이관리지역은 WMS(지도 이미지)만 제공하고
-   *  개별 지점의 등급을 데이터로 주지 않으며, 구 데이터 API는 폐지됐다. CLAUDE.md 참고)
    */
   note?: string;
   /**

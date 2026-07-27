@@ -7,7 +7,7 @@ import { LatLng } from './bridge';
 import { aggregateFor, formatAgo } from './points';
 import { openReportSheet } from './report';
 import {
-  toast, svgWc, svgShower, svgParasol, svgValley, svgStar, CLEAN_LABEL, CLEAN_CLASS,
+  toast, svgWc, svgShower, svgParasol, svgStar, CLEAN_LABEL, CLEAN_CLASS,
 } from './ui';
 
 declare global {
@@ -16,7 +16,7 @@ declare global {
   }
 }
 
-type PinFilter = 'all' | 'beach' | 'valley' | 'toilet' | 'shower';
+type PinFilter = 'all' | 'toilet' | 'shower';
 
 interface MapState {
   myPos: LatLng;
@@ -31,9 +31,8 @@ let state: MapState | null = null;
 // ---------- 마커 DOM ----------
 
 function spotPinHtml(spot: Spot, selected: boolean): string {
-  const valley = spot.type === 'valley';
-  const cls = `pin spot${valley ? ' valley' : ''}${selected ? ' selected' : ''}`;
-  const icon = valley ? svgValley(20, '#fff') : svgParasol(22, '#fff');
+  const cls = `pin spot${selected ? ' selected' : ''}`;
+  const icon = svgParasol(22, '#fff');
   return `<button type="button" class="${cls}" data-spot="${spot.id}" aria-label="${spot.name}">
     <div class="pbody"><div class="pbubble">${icon}</div></div>
     <div class="plabel">${spot.name}</div>
@@ -52,8 +51,6 @@ function facilityPinHtml(fac: Facility, selected: boolean): string {
 
 function visibleSpots(): Spot[] {
   if (!state) return [];
-  if (state.filter === 'beach') return SPOTS.filter((s) => s.type === 'beach');
-  if (state.filter === 'valley') return SPOTS.filter((s) => s.type === 'valley');
   return SPOTS;
 }
 
@@ -61,10 +58,6 @@ function visibleFacilities(): Facility[] {
   if (!state) return [];
   if (state.filter === 'toilet') return FACILITIES.filter((f) => f.type === 'toilet');
   if (state.filter === 'shower') return FACILITIES.filter((f) => f.type === 'shower');
-  if (state.filter === 'beach' || state.filter === 'valley') {
-    const ids = new Set(visibleSpots().map((s) => s.id));
-    return FACILITIES.filter((f) => ids.has(f.spotId));
-  }
   return FACILITIES;
 }
 
@@ -159,7 +152,7 @@ export function openSpotSheet(spotId: string): void {
     ? (aggs.reduce((s, a) => s + a.avgStars, 0) / aggs.length).toFixed(1)
     : '-';
 
-  const badge = spot.type === 'beach' ? beachBadge(spot) : '';
+  const badge = beachBadge(spot);
 
   const subParts = [spot.region];
   if (spot.openStart) subParts.push(`개장 ${spot.openStart}~${spot.openEnd} <span class="basis">(2024년 기준)</span>`);

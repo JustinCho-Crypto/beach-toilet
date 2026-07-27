@@ -2,7 +2,8 @@
 // 공공데이터 → src/data.generated.ts 배치.
 //
 // 파이프라인 (각 단계 결과는 data-raw/cache/*.json에 캐시 → 중단 후 재개 가능)
-//   1. spots     : 카카오 키워드 검색으로 전국 해수욕장/계곡을 좌표째 수집
+//   1. spots     : 카카오 키워드 검색으로 전국 해수욕장을 좌표째 수집
+//                  (계곡은 2026-07-27 제외 — justin 결정. 캐시에는 남아 있으나 읽지 않는다)
 //   2. filter    : 스팟이 있는 시군구의 화장실만 추림 (5만건 전수 지오코딩 회피)
 //   3. geocode   : 추린 화장실 주소 → 좌표
 //   4. showers   : 스팟별 '샤워장' 키워드 검색
@@ -22,8 +23,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const RAW = path.join(ROOT, 'data-raw');
 const CACHE = path.join(RAW, 'cache');
 
-// 시설을 스팟에 배정할 최대 거리. 이보다 멀면 '물놀이 스팟 주변'으로 보기 어렵다.
-const ASSIGN_RADIUS_M = 1500;
+// 시설을 스팟에 배정할 최대 거리.
+// 1500m였으나 500m로 조였다(justin 결정, 2026-07-27) — "걸어서 2km 가야 하면 화장실 안 간다".
+// 물놀이 중에 다녀올 만한 거리만 남긴다. 되돌리면 다시 '차 타고 갈 거리'가 섞인다.
+const ASSIGN_RADIUS_M = 500;
 // 한 스팟에 붙일 최대 시설 수 (바텀시트가 감당할 분량 + 번들 크기 관리)
 const MAX_FACILITIES_PER_SPOT = 12;
 // 카카오 API 동시 호출 수
@@ -51,7 +54,7 @@ const args = Object.fromEntries(
 
 // ---------- 1. 스팟 수집 ----------
 
-// 해수욕장이 있는 연안 시군구 + 계곡이 유명한 내륙 시군구.
+// 해수욕장이 있는 연안 시군구.
 // 카카오 키워드 검색은 쿼리당 최대 45건이라 전국 단위 한 방 검색이 불가능해서 지역별로 쪼갠다.
 const COASTAL = [
   '부산 해운대구', '부산 수영구', '부산 사하구', '부산 서구', '부산 기장군',
@@ -69,18 +72,6 @@ const COASTAL = [
   '제주 제주시', '제주 서귀포시',
 ];
 
-const VALLEY_REGIONS = [
-  '경기 가평군', '경기 양평군', '경기 포천시', '경기 남양주시', '경기 광주시', '경기 안성시',
-  '강원 인제군', '강원 홍천군', '강원 평창군', '강원 정선군', '강원 영월군', '강원 춘천시',
-  '강원 원주시', '강원 횡성군', '강원 화천군',
-  '충북 제천시', '충북 단양군', '충북 괴산군', '충북 보은군', '충북 영동군',
-  '충남 공주시', '충남 청양군', '충남 금산군',
-  '전북 무주군', '전북 진안군', '전북 남원시', '전북 정읍시', '전북 완주군',
-  '전남 구례군', '전남 곡성군', '전남 담양군', '전남 화순군',
-  '경북 문경시', '경북 봉화군', '경북 청송군', '경북 영주시', '경북 상주시',
-  '경남 산청군', '경남 함양군', '경남 거창군', '경남 하동군', '경남 밀양시', '경남 양산시',
-  '제주 제주시', '제주 서귀포시',
-];
 
 function normalizeName(s) {
   return s.replace(/\(.*?\)/g, '').replace(/\s+/g, '');
@@ -100,7 +91,7 @@ function isSpotName(name, term) {
  * 더 통용되는 '해수욕장' 쪽을 남긴다.
  */
 function dedupeNearby(list, radiusM = 600) {
-  const base = (n) => normalizeName(n).replace(/(해수욕장|해변|계곡)$/, '');
+  const base = (n) => normalizeName(n).replace(/(해수욕장|해변)$/, '');
   const sorted = [...list].sort((a, b) => {
     const ax = a.name.endsWith('해수욕장') ? 0 : 1;
     const bx = b.name.endsWith('해수욕장') ? 0 : 1;
@@ -124,8 +115,10 @@ async function stageSpots() {
   const c = cache(path.join(CACHE, '1-spots.json'));
   const cached = c.read();
   if (cached && !args.force) {
-    console.log(`[1/5] 스팟 (캐시): 해수욕장 ${cached.beaches.length} · 계곡 ${cached.valleys.length}`);
-    return cached;
+    // 캐시에 valleys가 남아 있어도 무시한다 — 계곡은 제외 결정(2026-07-27).
+    // 캐시를 지우면 카카오 쿼터를 다시 쓰게 되므로 파일은 그대로 두고 읽기만 안 한다.
+    console.log(`[1/5] 스팟 (캐시): 해수욕장 ${cached.beaches.length}`);
+    return { beaches: cached.beaches };
   }
 
   console.log('[1/5] 카카오 키워드 검색으로 스팟 수집');
@@ -151,9 +144,8 @@ async function stageSpots() {
   };
 
   const beaches = await collect(COASTAL, ['해수욕장', '해변'], 'beach');
-  const valleys = await collect(VALLEY_REGIONS, ['계곡'], 'valley');
-  console.log(`  → 해수욕장 ${beaches.length}곳 · 계곡 ${valleys.length}곳`);
-  return c.write({ beaches, valleys });
+  console.log(`  → 해수욕장 ${beaches.length}곳`);
+  return c.write({ beaches });
 }
 
 // ---------- 2. 화장실 후보 필터 ----------
@@ -360,7 +352,7 @@ function manualShowerNotes() {
   return Array.isArray(j.spotShowerNotes) ? j.spotShowerNotes : [];
 }
 
-function assign({ beaches, valleys }, candidates, coords, pois) {
+function assign({ beaches }, candidates, coords, pois) {
   console.log('[5/5] 시설 배정 + 파일 생성');
 
   // 해양수산부 파일 데이터 (사람이 내려받아 data-raw/에 둔 것). 없으면 조용히 건너뛴다.
@@ -388,12 +380,6 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
     if (vis && vis.rank <= 50) spot.note = `이용객 전국 ${vis.rank}위`;
     spots.push(spot);
   });
-  valleys.forEach((v, i) => spots.push({
-    id: slug('v', i), type: 'valley', name: v.name,
-    region: (v.address || v.jibun || '').split(/\s+/).slice(0, 2).join(' '),
-    lat: v.lat, lng: v.lng,
-  }));
-
   const bySpot = new Map(spots.map((s) => [s.id, []]));
 
   const place = (fac) => {
@@ -432,11 +418,18 @@ function assign({ beaches, valleys }, candidates, coords, pois) {
       console.warn(`  ⚠ 수작업 샤워장 '${m.name}': 스팟 '${m.spotName}'을 찾을 수 없어 건너뜀`);
       continue;
     }
+    // 수작업 좌표도 반경 검사를 거친다. 이름으로 스팟에 직접 붙이는 경로라 place()의
+    // 반경 체크를 우회하는데, 실제로 근거 없이 찍은 좌표가 10.5km 떨어진 채 통과한
+    // 적이 있다(구조라, 2026-07-27). 좌표를 모르면 spotShowerNotes로 옮길 것.
+    const d = haversineM(spot.lat, spot.lng, m.lat, m.lng);
+    if (d > ASSIGN_RADIUS_M) {
+      console.warn(`  ⚠ 수작업 샤워장 '${m.name}': 스팟에서 ${Math.round(d)}m — 반경(${ASSIGN_RADIUS_M}m) 밖이라 건너뜀. 좌표를 다시 확인하세요.`);
+      continue;
+    }
     // source는 근거 추적용이라 앱 번들에는 싣지 않는다.
     const { spotName, source, ...rest } = m;
     void source;
-    add(spot.id, { id: `ms${i}`, type: 'shower', ...rest },
-      haversineM(spot.lat, spot.lng, m.lat, m.lng));
+    add(spot.id, { id: `ms${i}`, type: 'shower', ...rest }, d);
     manualCount += 1;
   }
 
@@ -542,7 +535,7 @@ import type { Spot, Facility } from './data';
 (async () => {
   fs.mkdirSync(CACHE, { recursive: true });
   const spotsRaw = await stageSpots();
-  const allSpots = [...spotsRaw.beaches, ...spotsRaw.valleys];
+  const allSpots = spotsRaw.beaches;
   const candidates = await stageFilterToilets(allSpots);
   const limited = args.limit ? candidates.slice(0, Number(args.limit)) : candidates;
   const coords = await stageGeocode(limited);

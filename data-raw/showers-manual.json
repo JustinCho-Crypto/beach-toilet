@@ -69,17 +69,17 @@
   "spotShowerNotes": [
     {
       "spotName": "속초해수욕장",
-      "note": "샤워장 2개소 · 실내 코인 1,000원(3분, 온수) / 야외 코인 500원(1분30초)",
+      "note": "샤워장 2개소 · 실내 코인 1,000원(3분, 온수) / 야외 코인 500원(1분30초) (2026 기준)",
       "source": "속초시설관리공단 해수욕장 안내 https://www.sokchosiseol.or.kr/biz/beach.do (2026)"
     },
     {
       "spotName": "송정해수욕장",
-      "note": "샤워탈의장 1회(60초) 1,000원 · 개장 6.26~8.31",
+      "note": "샤워탈의장 1회(60초) 1,000원 (2026 기준)",
       "source": "해운대구청 송정해수욕장 이용안내 https://www.haeundae.go.kr/index.do?menuCd=DOM_000000302002002000 (2026)"
     },
     {
       "spotName": "해운대해수욕장",
-      "note": "샤워탈의장 1회(60초) 1,000원 · 간이샤워장은 공용화장실 1·2·3호 앞",
+      "note": "샤워탈의장 1회(60초) 1,000원 · 간이샤워장은 공용화장실 1·2·3호 앞 (2026 기준)",
       "source": "해운대구청 이용안내 https://www.haeundae.go.kr/tour/index.do?menuCd=DOM_000000302001002000 (2026)"
     },
     {
@@ -114,27 +114,27 @@
     },
     {
       "spotName": "진하해수욕장",
-      "note": "샤워장 2곳 · 세족장 2곳 · 무료 (개장 기간)",
+      "note": "샤워장 2곳 · 세족장 2곳 · 무료 (2025 기준)",
       "source": "울주군 — 샤워장·세족장 무료 개방, 샤워장 2곳/세족장 2곳/공중화장실 5곳 운영. 한국일보 2025.8 https://www.hankookilbo.com/news/article/A2025080309520001063"
     },
     {
       "spotName": "이호테우해수욕장",
-      "note": "온수 샤워장 3,000원 (일반 기준)",
+      "note": "온수 샤워장 3,000원 (2026 기준)",
       "source": "제주도 2026 해수욕장 운영 계획 — 12개 해수욕장 6.24~9.6 개장, 이호테우 온수 샤워장 일반 3,000원. 헤드라인제주 https://www.headlinejeju.co.kr/news/articleView.html?idxno=594807"
     },
     {
       "spotName": "무창포해수욕장",
-      "note": "유료 샤워장 있음 (요금 미확인)",
+      "note": "유료 샤워장 있음",
       "source": "보령시 무창포해수욕장 안내 — 샤워시설·탈의실 보유, 유료 공용 샤워장. 금액은 공식 고시 미확인 https://www.brcn.go.kr/tour/sub03_02_02.do"
     },
     {
       "spotName": "삼척해변",
-      "note": "샤워장 있음 (요금 미확인)",
+      "note": "샤워장 있음",
       "source": "삼척시 공식 관광 홈페이지 삼척해변 편의시설 안내 — '샤워장' 명시, 요금은 미고시 https://www.samcheok.go.kr/tour/01456/01462/02977.web"
     },
     {
       "spotName": "낙산해수욕장",
-      "note": "온수 샤워장 있음 (요금 미확인)",
+      "note": "온수 샤워장 있음",
       "source": "트립닷컴 — 낙산해수욕장 온수샤워장 위치 소개 (요금 정보 없음) https://kr.trip.com/moments/detail/yangyang-14775-12619515/"
     },
     {
@@ -144,77 +144,67 @@
     },
     {
       "spotName": "광안리해수욕장",
-      "note": "샤워장 있음 (요금 미확인 — 광안리해양레포츠센터 사이트 접근 불가)",
+      "note": "샤워장 있음",
       "source": "부산시 광안리해수욕장 공식 https://www.busan.go.kr/depart/ahgwanganri"
     },
     {
       "spotName": "송도해수욕장",
-      "note": "샤워장·탈의실 있음 (요금 미확인)",
+      "note": "샤워장·탈의실 있음",
       "source": "부산시 송도해수욕장 공식 https://www.busan.go.kr/depart/ahsongdo"
     },
     {
       "spotName": "다대포해수욕장",
-      "note": "샤워장 있음 (요금 미확인)",
+      "note": "샤워장 있음",
       "source": "부산시 사하구 다대포해수욕장 공식 https://www.saha.go.kr/tour/contents.do?mId=0101030000"
     },
     {
       "spotName": "함덕해수욕장",
-      "note": "탈의장·샤워장 있음 (요금 미확인 — 검색 요약에만 '성인 2,000원' 기록)",
+      "note": "탈의장·샤워장 있음",
       "source": "제주 tjeju.com 함덕해수욕장 시설 안내 https://www.tjeju.com/CS/TourInfo/detail.aspx?cid=710"
     },
     {
       "spotName": "꽃지해수욕장",
-      "note": "인접 공원에 샤워장 있음 (요금 미확인 — 해수욕장 공식 페이지에는 미언급)",
+      "note": "인접 공원에 샤워장 있음",
       "source": "태안군청 꽃지해수욕장 공식 https://www.taean.go.kr/prog/tursmCn/tour/sub02_03/view.do?cntno=33&contentTypeCode=TC002"
     },
     {
       "spotName": "춘장대해수욕장",
-      "note": "부대시설 샤워장 유료 (요금 미확인 — 블로그 참고: 약 2,000원)",
+      "note": "부대시설 샤워장 유료",
       "source": "충남 태안 춘장대해수욕장 (공식 사이트 SSL 오류로 접근 불가) http://www.chunjangdaebeach.com/"
     },
     {
       "spotName": "주문진해변",
-      "note": "샤워장 있음 (요금 미확인 — 블로그 참고: 3,500원 균일가)",
+      "note": "샤워장 있음",
       "source": "강릉시 주문진해수욕장 (공식 홈페이지 404) 일반 블로그 참고 https://ionefree.com"
     },
     {
       "spotName": "일산해수욕장",
-      "note": "샤워실·탈의실 있음 (요금 미확인)",
+      "note": "샤워실·탈의실 있음",
       "source": "울산시 동구청 일산해수욕장 공식 https://www.donggu.ulsan.kr/tour/tourBBS/EN/view.do?nttId=168"
     },
     {
-      "spotName": "천진해변",
-      "note": "해수욕장 시설 (요금 미확인 — 공식 페이지에 샤워장 언급 없음)",
-      "source": "강원 고성군 천진해변 공식 https://www.gwgs.go.kr/prog/tursmCn/tour/sub02_02/view.do?cntno=81"
-    },
-    {
       "spotName": "협재해수욕장",
-      "note": "온수 탈의·샤워장 있음 (요금 미확인 — 블로그 추정: 성인 3,000원/어린이 1,500원)",
+      "note": "온수 탈의·샤워장 있음",
       "source": "제주 협재해수욕장 (공식 페이지에서는 온수 탈의·샤워장만 명시, 요금 미표기) https://tour.jejudsi.kr/tour.htm?act=view&id=map14"
     },
     {
       "spotName": "봉포해변",
-      "note": "온수 샤워장 있음 (요금 미확인 — 고성군 조례 가능성, 블로그 참고: 대인 5,000원/소인 3,000원)",
+      "note": "온수 샤워장 있음",
       "source": "강원 고성군 봉포해변 공식 https://www.gwgs.go.kr/prog/tursmCn/tour/sub02_02/view.do?cntno=76"
     },
     {
       "spotName": "중문색달해수욕장",
-      "note": "공용샤워장 있음 · 개장기간(7~8월) 운영 · 온수 미제공 (요금 미확인 — 블로그 참고: 어른 2,000원/청소년·어린이 1,000원)",
+      "note": "공용샤워장 있음 · 개장기간(7~8월) 운영 · 온수 미제공",
       "source": "제주 중문색달해수욕장 (공식 요금 미표기) https://www.followdaddy.co.kr/191"
     },
     {
       "spotName": "맹방해수욕장",
-      "note": "야영장·샤워장 있음 (요금 미확인)",
+      "note": "야영장·샤워장 있음",
       "source": "삼척시 맹방해변 공식 https://www.samcheok.go.kr/tour/01456/01466/02201.web"
     },
     {
-      "spotName": "송지호해수욕장",
-      "note": "해수욕장 시설 (요금 미확인 — 고성군 조례 관리 가능성, 직접 확인 필요)",
-      "source": "강원 고성군 송지호해수욕장 공식 https://www.songjihobeach.co.kr/"
-    },
-    {
       "spotName": "아야진해수욕장",
-      "note": "온수 샤워장 있음 (요금 미확인 — 검색 요약: 성인 5,000원/어린이 3,000원)",
+      "note": "온수 샤워장 있음",
       "source": "강원 고성군 아야진해수욕장 (공식 페이지에서는 요금 미표기) https://www.ayajinbeach.co.kr/"
     },
     {
@@ -223,17 +213,8 @@
       "source": "충남 당진시 왜목마을 공식 관광 홈페이지 https://www.dangjin.go.kr/prog/tursmCn/tour/sub02_01_03/view.do?cntno=81"
     },
     {
-      "spotName": "구조라해수욕장",
-      "name": "구조라해수욕장 샤워장",
-      "lat": 34.8849,
-      "lng": 128.6269,
-      "fee": "paid",
-      "feeAmount": 2000,
-      "source": "거제시 공식 관광 홈페이지 — 중앙 건물 2층 샤워장 대인 2천원·소인 1천원, 1층 코인 샤워기 https://www.geoje.go.kr/user/smarttour/view.geoje?basicSid=15&tourFoodStyle=A01&menuCd=DOM_000008503001000000&pageIndex=1"
-    },
-    {
       "spotName": "봉수대해변",
-      "note": "샤워장 있음 (요금 미확인 — 고성군 조례 미검증)",
+      "note": "샤워장 있음",
       "source": "강원 고성군 봉수대해변 공식 https://www.gwgs.go.kr/prog/tursmCn/tour/sub02_02/view.do?cntno=74"
     },
     {
@@ -243,17 +224,17 @@
     },
     {
       "spotName": "십리포해수욕장",
-      "note": "샤워장 있음 (요금 미확인)",
+      "note": "샤워장 있음",
       "source": "인천 옹진군 영흥도 십리포해수욕장 (캠핑장 편의시설) http://xn--oy2b27mhsar7i4qbz53booc.kr"
     },
     {
       "spotName": "와현모래숲해수욕장",
-      "note": "샤워장 있음 · 장애인 무료 (요금 미확인 — 공식 고시 미확인)",
+      "note": "샤워장 있음 · 장애인 무료",
       "source": "경남 거제시 와현모래숲 공식 https://tour.geoje.go.kr/user/smarttour/view.geoje?basicSid=22&tourFoodStyle=A01&menuCd=DOM_000008503001000000&pageIndex=1"
     },
     {
       "spotName": "삼양해수욕장",
-      "note": "샤워장 1개소 (요금 미확인)",
+      "note": "샤워장 1개소",
       "source": "제주시 삼양해수욕장 공식 https://www.visitjeju.net/kr/detail/view?contentsid=CONT_000000000500301"
     },
     {
@@ -265,6 +246,11 @@
       "spotName": "화진포해변",
       "note": "샤워장 · 어른 4,000원 · 군인/청소년 3,000원 · 어린이 2,000원",
       "source": "강원 고성군 화진포해변 공식 https://www.gwgs.go.kr/prog/tursmCn/tour/sub02_02/view.do?cntno=85"
+    },
+    {
+      "spotName": "구조라해수욕장",
+      "note": "중앙 건물 2층 샤워장 · 대인 2,000원 · 소인 1,000원 · 1층 코인 샤워기",
+      "source": "거제시 공식 관광 홈페이지 — 중앙 건물 2층 샤워장 대인 2천원·소인 1천원, 1층 코인 샤워기 https://www.geoje.go.kr/user/smarttour/view.geoje?basicSid=15&tourFoodStyle=A01&menuCd=DOM_000008503001000000&pageIndex=1"
     }
   ]
 }
